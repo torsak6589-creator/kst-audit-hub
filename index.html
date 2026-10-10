@@ -462,11 +462,13 @@ function renderHome(){
 }
 
 /* ---------- สิทธิ์ ---------- */
+/* เปิดใช้งานทั่วไป: ทุกคนที่มีลิงก์เข้าใช้และแก้ไขได้ ไม่ต้องล็อกอิน (ตั้งเป็น false เพื่อกลับไปใช้ระบบล็อกอิน+สิทธิ์ตามทีม ซึ่งต้องใช้ schema.sql) */
+var OPEN=true;
 var ADMIN_EMAIL='torsak.ar@kst-hatyai.com',ADMIN2='kitar.sa@ksthatyai365.onmicrosoft.com';
 function lc(s){return String(s||'').trim().toLowerCase()}
 function computeMe(){
   var em=lc(S.email),row=(S.members||[]).filter(function(m){return lc(m.email)===em})[0];
-  S.me={email:S.email||'',admin:!S.db||em===ADMIN_EMAIL||em===ADMIN2||!!(row&&row.is_admin),team:row&&row.team!=null?+row.team:null,teams:row?((row.teams&&row.teams.length)?row.teams.map(Number):(row.team!=null?[+row.team]:[])):[],name:row?row.name:'',role:row?row.role:''};
+  S.me={email:S.email||'',admin:OPEN||!S.db||em===ADMIN_EMAIL||em===ADMIN2||!!(row&&row.is_admin),team:row&&row.team!=null?+row.team:null,teams:row?((row.teams&&row.teams.length)?row.teams.map(Number):(row.team!=null?[+row.team]:[])):[],name:row?row.name:'',role:row?row.role:''};
 }
 function inTeam(i){return (S.me.teams||[]).indexOf(+i)>=0}
 function canTeam(i){return !S.db||S.me.admin||inTeam(i)}
@@ -474,7 +476,7 @@ function canEdit(x){return !S.db||S.me.admin||(x&&x.team!=null&&inTeam(x.team))}
 function toast(m){var d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove()},4200)}
 function whoRender(){
   var w=$('who');if(!w)return;
-  if(!S.db){w.textContent='';return}
+  if(!S.db||OPEN){w.textContent='';return}
   var t=S.me.admin?'ผู้ดูแล (QMR)':(S.me.teams&&S.me.teams.length)?('ทีม '+S.me.teams.map(function(x){return x+1}).join(', ')+(S.me.role==='lead'?' · หัวหน้าทีม':' · ผู้ตรวจ')):(S.me.role==='observer'?'ผู้สังเกตการณ์ (ดูอย่างเดียว)':'ดูอย่างเดียว');
   w.innerHTML='<span>'+esc(S.email)+' · <b>'+esc(t)+'</b></span><button class="btn sm" id="w-out">ออก</button>';
   $('w-out').onclick=function(){S.sb.auth.signOut().then(function(){location.reload()})};
@@ -487,8 +489,8 @@ function renderTeams(){
   var teams=getTeams(),saved=!!S.teams,adm=S.me.admin,ed=adm;
   S.draft=S.draft||{};
   var html='<div style="display:flex;flex-direction:column;gap:16px"><div><h1 style="font-size:22px">ทีมตรวจติดตามภายใน</h1>'+
-   '<p class="muted" style="margin:6px 0 0;max-width:72ch">'+teams.length+' ทีม ตามกำหนดการ FM-MR-24 ('+FM24.round+') · ผู้สังเกตการณ์ไม่มีสิทธิ์แก้ผลตรวจ · คนที่อยู่หลายทีมใช้อีเมลเดียวและแก้ไขได้ทุกทีมที่สังกัด '+(S.db?(adm?'ผู้ดูแล (QMR) กรอกอีเมลของแต่ละคนเพื่อกำหนดสิทธิ์: แต่ละคนแก้ไขได้เฉพาะผลตรวจและ CAR ของทีมตัวเอง':'เฉพาะผู้ดูแล (QMR) แก้ไขทีมและอีเมลได้'):'')+(saved?'':' · ตอนนี้เป็นข้อเสนอเริ่มต้น')+'</p></div>';
-  if(adm&&S.db){
+   '<p class="muted" style="margin:6px 0 0;max-width:72ch">'+teams.length+' ทีม ตามกำหนดการ FM-MR-24 ('+FM24.round+') · ผู้สังเกตการณ์ไม่มีสิทธิ์แก้ผลตรวจ · คนที่อยู่หลายทีมใช้อีเมลเดียวและแก้ไขได้ทุกทีมที่สังกัด '+(OPEN?'ทุกคนที่มีลิงก์แก้ไขได้':S.db?(adm?'ผู้ดูแล (QMR) กรอกอีเมลของแต่ละคนเพื่อกำหนดสิทธิ์: แต่ละคนแก้ไขได้เฉพาะผลตรวจและ CAR ของทีมตัวเอง':'เฉพาะผู้ดูแล (QMR) แก้ไขทีมและอีเมลได้'):'')+(saved?'':' · ตอนนี้เป็นข้อเสนอเริ่มต้น')+'</p></div>';
+  if(adm&&S.db&&!OPEN){
     html+='<div class="card"><b>วางรายชื่อ + อีเมลทีละบรรทัด</b> <span class="hint">เช่น “ทรงสิทธิ์ somchai@kst-hatyai.com” ระบบจะจับคู่กับรายชื่อด้านล่าง</span>'+
      '<textarea id="t-bulk" style="min-height:90px;margin-top:6px" placeholder="ชื่อ อีเมล"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="t-match">จับคู่อีเมล</button><span class="small muted" id="t-bm"></span></div></div>';
   }
@@ -498,16 +500,16 @@ function renderTeams(){
     html+='<div class="card team"'+(mine?' style="border-color:var(--accent)"':'')+'><h3>ทีม '+(i+1)+(mine?' <span class="tag">ทีมของคุณ</span>':'')+'</h3><div class="lead">หัวหน้าทีม · '+esc(t.lead)+'</div>'+
      (ed?'<div class="form" style="grid-template-columns:1fr 1fr;gap:6px;margin:6px 0"><label class="f small">วันที่ตรวจ<input data-tf="dates" data-ti="'+i+'" value="'+esc(t.dates||'')+'" placeholder="12-14/10/2026"></label><label class="f small">เวลาที่เข้าตรวจ<input data-tf="time" data-ti="'+i+'" value="'+esc(t.time||'')+'" placeholder="09.00-16.00 น."></label><label class="f small" style="grid-column:1/3">หน่วยงานที่ตรวจ (บรรทัดละหน่วยงาน)<textarea data-tf="depts" data-ti="'+i+'" style="min-height:64px">'+esc((t.depts||[]).join('\n'))+'</textarea></label></div>'
        :'<div class="small" style="margin:4px 0"><b>วันที่</b> '+esc(t.dates||'–')+' · <b>เวลา</b> '+esc(t.time||'–')+'<br><b>หน่วยงาน</b> '+esc((t.depts||[]).join(' / ')||'–')+'</div>')+
-     (adm&&S.db?'<input data-em="'+esc(t.lead)+'" type="email" placeholder="อีเมลหัวหน้าทีม" value="'+esc(emailOf(t.lead))+'">':'')+
+     (adm&&S.db&&!OPEN?'<input data-em="'+esc(t.lead)+'" type="email" placeholder="อีเมลหัวหน้าทีม" value="'+esc(emailOf(t.lead))+'">':'')+
      '<div class="chk">'+SKEYS.map(function(s){return '<label class="small"><input type="checkbox" data-ts="'+i+'" value="'+s+'"'+((t.systems||[]).indexOf(s)>=0?' checked':'')+(ed?'':' disabled')+'> '+SYS[s].short+'</label>'}).join('')+'</div>'+
      t.members.map(function(m){return '<div class="mem" style="flex-wrap:wrap"><span>'+esc(m)+'</span>'+(ed?'<select data-mv="'+esc(m)+'" data-from="'+i+'" aria-label="ย้าย '+esc(m)+'">'+teams.map(function(_,j){return '<option value="'+j+'"'+(j===i?' selected':'')+'>ทีม '+(j+1)+'</option>'}).join('')+'</select>':'')+
-       (adm&&S.db?'<input style="flex:1 1 100%" data-em="'+esc(m)+'" type="email" placeholder="อีเมล" value="'+esc(emailOf(m))+'">':'')+'</div>'}).join('')+
-     (t.observers&&t.observers.length?'<div class="small muted" style="margin-top:6px">ผู้สังเกตการณ์</div>'+t.observers.map(function(m){return '<div class="mem" style="flex-wrap:wrap"><span>'+esc(m)+' <span class="tag">สังเกตการณ์</span></span>'+(adm&&S.db?'<input style="flex:1 1 100%" data-em="'+esc(m)+'" type="email" placeholder="อีเมล (เพื่อให้เข้าดูได้)" value="'+esc(emailOf(m))+'">':'')+'</div>'}).join(''):'')+'</div>';
+       (adm&&S.db&&!OPEN?'<input style="flex:1 1 100%" data-em="'+esc(m)+'" type="email" placeholder="อีเมล" value="'+esc(emailOf(m))+'">':'')+'</div>'}).join('')+
+     (t.observers&&t.observers.length?'<div class="small muted" style="margin-top:6px">ผู้สังเกตการณ์</div>'+t.observers.map(function(m){return '<div class="mem" style="flex-wrap:wrap"><span>'+esc(m)+' <span class="tag">สังเกตการณ์</span></span>'+(adm&&S.db&&!OPEN?'<input style="flex:1 1 100%" data-em="'+esc(m)+'" type="email" placeholder="อีเมล (เพื่อให้เข้าดูได้)" value="'+esc(emailOf(m))+'">':'')+'</div>'}).join(''):'')+'</div>';
   });
   html+='</div>';
   if(adm){
     var ex=(S.members||[]).filter(function(m){return m.is_admin&&lc(m.email)!==ADMIN_EMAIL&&lc(m.email)!==ADMIN2}).map(function(m){return m.email}).join('\n');
-    if(S.db)html+='<div class="card"><b>ผู้ดูแลระบบเพิ่มเติม (QMR / DCC)</b> <span class="hint">อีเมลต่อบรรทัด — ผู้ดูแลแก้ไขได้ทุกทีม; '+ADMIN_EMAIL+' เป็นผู้ดูแลหลักเสมอ</span><textarea id="t-adm" style="min-height:60px;margin-top:6px">'+esc(S.draftAdm!=null?S.draftAdm:ex)+'</textarea></div>';
+    if(S.db&&!OPEN)html+='<div class="card"><b>ผู้ดูแลระบบเพิ่มเติม (QMR / DCC)</b> <span class="hint">อีเมลต่อบรรทัด — ผู้ดูแลแก้ไขได้ทุกทีม; '+ADMIN_EMAIL+' เป็นผู้ดูแลหลักเสมอ</span><textarea id="t-adm" style="min-height:60px;margin-top:6px">'+esc(S.draftAdm!=null?S.draftAdm:ex)+'</textarea></div>';
     html+='<div class="row"><button class="btn" id="t-print">พิมพ์กำหนดการ FM-MR-24</button><button class="btn pri" id="t-save">บันทึกทีม'+(S.db?'และสิทธิ์':'')+'</button><button class="btn" id="t-reset">คืนค่าตาม FM-MR-24</button><span class="small muted" id="t-msg"></span></div>';
   }
   html+='</div>';
@@ -538,7 +540,7 @@ function renderTeams(){
     if(ok)renderTeams();};
   $('t-save').onclick=function(){
     var msg=$('t-msg');saveTeams();
-    if(!S.db){msg.textContent='บันทึกแล้ว';return}
+    if(!S.db||OPEN){msg.textContent='บันทึกแล้ว';return}
     var tm=getTeams(),rows={},bad=[];
     tm.forEach(function(t,i){
       [[t.lead,'lead']].concat(t.members.map(function(m){return[m,'auditor']})).forEach(function(p){
@@ -991,7 +993,8 @@ function start(sb,sess){
 }
 if(configured()&&window.supabase){
   var sb=window.supabase.createClient(CFG.url,CFG.anonKey);
-  sb.auth.getSession().then(function(r){
+  if(OPEN){S.sbStarted=true;start(sb,null)}
+  else sb.auth.getSession().then(function(r){
     if(r.data&&r.data.session)start(sb,r.data.session);else loginView(sb);
     sb.auth.onAuthStateChange(function(ev,sess){if(sess&&!S.sbStarted){S.sbStarted=true;if(!S.email)start(sb,sess)}});
   });
