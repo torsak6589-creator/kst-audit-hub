@@ -874,13 +874,35 @@ function attach(sb,db){
 function loginView(sb,msg){
   document.querySelector('main').hidden=true;document.querySelector('header.top').hidden=true;
   var d=document.getElementById('login');if(!d){d=document.createElement('div');d.id='login';d.className='login wrap';document.body.appendChild(d)}
-  d.innerHTML='<h1 style="font-size:24px">KST Audit Hub</h1><p class="muted" style="margin:0">ล็อกอินด้วยอีเมลบริษัท ระบบจะส่งลิงก์เข้าสู่ระบบไปที่อีเมล</p>'+
-   '<label class="f">อีเมล<input id="lg-mail" type="email" placeholder="name@kst-hatyai.com" autocomplete="email"></label>'+
-   '<button class="btn pri" id="lg-go">ส่งลิงก์เข้าสู่ระบบ</button><div class="small" id="lg-msg">'+esc(msg||'')+'</div>';
-  document.getElementById('lg-go').onclick=function(){
-    var m=document.getElementById('lg-mail').value.trim();if(!m)return;
-    sb.auth.signInWithOtp({email:m,options:{emailRedirectTo:location.href.split('#')[0]}}).then(function(r){
-      document.getElementById('lg-msg').textContent=r.error?('ส่งไม่ได้: '+r.error.message):'ส่งลิงก์แล้ว เปิดอีเมลและกดลิงก์เพื่อเข้าใช้งาน'})};
+  var mode='in';
+  var draw=function(){
+    d.innerHTML='<h1 style="font-size:24px">KST Audit Hub</h1><p class="muted" style="margin:0">'+(mode==='in'?'เข้าสู่ระบบด้วยอีเมลบริษัทและรหัสผ่าน':'ลงทะเบียนครั้งแรก: ตั้งรหัสผ่านของคุณ (อย่างน้อย 6 ตัวอักษร)')+'</p>'+
+     '<label class="f">อีเมลบริษัท (พิมพ์เฉพาะชื่อหน้า @ ก็ได้)<input id="lg-mail" type="text" inputmode="email" placeholder="ชื่อ@kst-hatyai.com" autocomplete="username" autocapitalize="off"></label>'+
+     '<label class="f">รหัสผ่าน<input id="lg-pw" type="password" autocomplete="'+(mode==='in'?'current-password':'new-password')+'"></label>'+
+     (mode==='up'?'<label class="f">ยืนยันรหัสผ่าน<input id="lg-pw2" type="password" autocomplete="new-password"></label>':'')+
+     '<button class="btn pri" id="lg-go">'+(mode==='in'?'เข้าสู่ระบบ':'ลงทะเบียน')+'</button>'+
+     '<div class="small"><a href="#" id="lg-sw">'+(mode==='in'?'ยังไม่เคยเข้าใช้ — ลงทะเบียนครั้งแรก':'มีบัญชีแล้ว — เข้าสู่ระบบ')+'</a>'+(mode==='in'?' · <a href="#" id="lg-fg">ลืมรหัสผ่าน</a>':'')+'</div><div class="small" id="lg-msg">'+esc(msg||'')+'</div>';
+    var g=function(i){return document.getElementById(i)},say=function(t){g('lg-msg').textContent=t};
+    var mail=function(){var m=g('lg-mail').value.trim().toLowerCase();if(m&&m.indexOf('@')<0)m+='@kst-hatyai.com';
+      if(!/^[^@\s]+@kst-hatyai\.com$/.test(m)){say('ใช้ได้เฉพาะอีเมลบริษัท @kst-hatyai.com');return null}return m};
+    g('lg-sw').onclick=function(e){e.preventDefault();mode=mode==='in'?'up':'in';msg='';draw()};
+    if(g('lg-fg'))g('lg-fg').onclick=function(e){e.preventDefault();var m=mail();if(!m)return;
+      sb.auth.resetPasswordForEmail(m,{redirectTo:location.href.split('#')[0]}).then(function(r){say(r.error?'ส่งไม่ได้: '+r.error.message:'ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ '+m+' แล้ว')})};
+    var go=function(){
+      var m=mail(),pw=g('lg-pw').value;if(!m)return;if(!pw){say('กรอกรหัสผ่าน');return}
+      var b=g('lg-go');b.disabled=true;say('กำลังดำเนินการ…');
+      var done=function(r){b.disabled=false;
+        if(r.error){var e=r.error.message||'';
+          say(/invalid login/i.test(e)?'อีเมลหรือรหัสผ่านไม่ถูกต้อง (ถ้ายังไม่เคยลงทะเบียน กดลิงก์ด้านล่าง)':/already|registered/i.test(e)?'อีเมลนี้ลงทะเบียนแล้ว ใช้ “เข้าสู่ระบบ” หรือ “ลืมรหัสผ่าน”':/confirm/i.test(e)?'ต้องยืนยันอีเมลก่อน (แจ้ง QMR ปิด Confirm email ใน Supabase)':/rate|limit/i.test(e)?'ลองบ่อยเกินไป รอสักครู่':e)}
+        else if(r.data&&r.data.session){/* onAuthStateChange จะเปิดหน้าหลัก */}
+        else say('ลงทะเบียนแล้ว — ต้องยืนยันอีเมลก่อนเข้าใช้ (แจ้ง QMR ปิด Confirm email ใน Supabase)')};
+      if(mode==='in')sb.auth.signInWithPassword({email:m,password:pw}).then(done);
+      else{if(pw.length<6){b.disabled=false;say('รหัสผ่านอย่างน้อย 6 ตัวอักษร');return}
+        if(pw!==g('lg-pw2').value){b.disabled=false;say('รหัสผ่านทั้งสองช่องไม่ตรงกัน');return}
+        sb.auth.signUp({email:m,password:pw}).then(done)}};
+    g('lg-go').onclick=go;g('lg-pw').onkeydown=function(e){if(e.key==='Enter')go()};
+  };
+  draw();
 }
 function start(sb,sess){
   var d=document.getElementById('login');if(d)d.remove();
