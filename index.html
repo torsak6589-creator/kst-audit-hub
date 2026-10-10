@@ -80,10 +80,11 @@ th{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;le
 .res button[aria-pressed=true][data-r=PASS]{background:var(--pass-soft);color:var(--pass);border-color:var(--pass)}
 .res button[aria-pressed=true][data-r=OBS]{background:var(--obs-soft);color:var(--obs);border-color:var(--obs)}
 .res button[aria-pressed=true][data-r=NC]{background:var(--nc-soft);color:var(--nc);border-color:var(--nc)}
+.res button[aria-pressed=true][data-r=CR]{background:#7f1d1d;color:#fff;border-color:#7f1d1d}.res button[aria-pressed=true][data-r=MA]{background:var(--nc-soft);color:var(--nc);border-color:var(--nc)}.res button[aria-pressed=true][data-r=MI]{background:var(--obs-soft);color:var(--obs);border-color:var(--obs)}.res button[aria-pressed=true][data-r=CM]{background:var(--na-soft);color:var(--na);border-color:var(--na)}
 .res button[aria-pressed=true][data-r=NA]{background:var(--na-soft);color:var(--na);border-color:var(--na)}
 .item textarea{flex:1 1 240px;min-height:34px;height:34px;resize:vertical}
 .pill{font-size:12px;padding:1px 8px;border-radius:10px;font-weight:500}
-.p-PASS{background:var(--pass-soft);color:var(--pass)}.p-OBS{background:var(--obs-soft);color:var(--obs)}.p-NC{background:var(--nc-soft);color:var(--nc)}.p-NA{background:var(--na-soft);color:var(--na)}
+.p-PASS{background:var(--pass-soft);color:var(--pass)}.p-OBS{background:var(--obs-soft);color:var(--obs)}.p-NC{background:var(--nc-soft);color:var(--nc)}.p-CR{background:#7f1d1d;color:#fff}.p-MA{background:var(--nc-soft);color:var(--nc)}.p-MI{background:var(--obs-soft);color:var(--obs)}.p-CM{background:var(--na-soft);color:var(--na)}.p-NA{background:var(--na-soft);color:var(--na)}
 .note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
 [hidden]{display:none!important}
 @media (max-width:560px){.item{grid-template-columns:minmax(0,1fr)}.ctl{grid-column:1}.item .cl{flex-direction:row;flex-wrap:wrap}}
@@ -104,6 +105,7 @@ body{margin:0}
 .car textarea{min-height:64px}
 .wide{grid-column:1/-1}
 .sevbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;padding:6px 8px;border:1px dashed var(--nc);border-radius:8px}.sevbox .res button[aria-pressed=true][data-s=MA]{background:var(--nc);color:#fff;border-color:var(--nc)}.sevbox .res button[aria-pressed=true][data-s=MI]{background:var(--obs-soft);color:var(--obs);border-color:var(--obs)}
+.pill.s-CR{background:#7f1d1d;color:#fff}
 .pill.s-MA{background:var(--nc-soft);color:var(--nc)}.pill.s-MI{background:var(--obs-soft);color:var(--obs)}.pill.s-OBS{background:var(--accent-soft);color:var(--accent)}
 .hint{font-size:12px;color:var(--muted)}
 #printArea{display:none}
@@ -390,13 +392,24 @@ function removeAudit(id){
 }
 
 /* build the checklist rows for a session from its selected systems */
+var RES=['PASS','CR','MA','MI','OBS','CM','NA'];
+var RL={PASS:'Pass',CR:'Critical',MA:'Major',MI:'Minor',OBS:'Obs',CM:'Comment',NA:'N/A'};
+var FIND={CR:1,MA:1,MI:1,OBS:1};   /* ผลที่ต้องออกใบ CAR */
+function normA(a){ /* แปลงผลแบบเก่า (NC/NA) เป็นแบบใหม่ */
+  var r=a&&a.results;if(!r)return a;
+  Object.keys(r).forEach(function(k){var v=r[k];if(!v)return;
+    if(v.r==='NC'){v.r=v.s==='MA'?'MA':'MI';delete v.s}
+    });
+  return a;
+}
 function stats(a){
-  var rows=rowsFor(a.systems||[]),c={PASS:0,OBS:0,NC:0,NA:0,open:0,MA:0,MI:0,NS:0};
-  rows.forEach(function(r){var v=(a.results||{})[r.id];if(v&&v.r){c[v.r]++;if(v.r==='NC'){if(v.s==='MA')c.MA++;else if(v.s==='MI')c.MI++;else c.NS++}}else c.open++});
-  c.total=rows.length;c.done=c.total-c.open;
-  var ap=c.PASS+c.OBS+c.NC;c.pct=ap?Math.round(c.PASS/ap*100):null;
+  var rows=rowsFor(a.systems||[]),c={PASS:0,CR:0,MA:0,MI:0,OBS:0,CM:0,NA:0,open:0};
+  rows.forEach(function(r){var v=(a.results||{})[r.id];if(v&&v.r&&c[v.r]!=null)c[v.r]++;else c.open++});
+  c.NC=c.CR+c.MA+c.MI;c.total=rows.length;c.done=c.total-c.open;
+  var ap=c.PASS+c.CR+c.MA+c.MI+c.OBS;c.pct=ap?Math.round(c.PASS/ap*100):null;
   return c;
 }
+function pillRes(c){return RES.map(function(k){return '<span class="pill p-'+k+'" id="c-'+k+'">'+RL[k]+' '+c[k]+'</span>'}).join('')}
 function thDate(d){try{var p=d.split('-');return p[2]+'/'+p[1]+'/'+(+p[0]+543)}catch(e){return d||''}}
 
 /* ---------- views ---------- */
@@ -412,11 +425,11 @@ function renderHome(){
   var list=Object.keys(S.audits).map(function(k){return S.audits[k]}).sort(function(a,b){return (b.updated||0)-(a.updated||0)});
   var teams=getTeams();
   var perSys=SKEYS.map(function(s){
-    var n=0,nc=0,obs=0;
+    var n=0,cr=0,ma=0,mi=0,obs=0;
     list.forEach(function(a){if((a.systems||[]).indexOf(s)<0)return;n++;
       rowsFor(a.systems).forEach(function(r){var v=(a.results||{})[r.id];if(!v||!v.r)return;
-        if(r.qs.some(function(q){return q.s===s})){if(v.r==='NC')nc++;if(v.r==='OBS')obs++}})});
-    return '<div class="card sys"><span class="n">'+esc(SYS[s].name)+'</span><span class="big">'+n+' <span class="small muted" style="font-family:var(--f-body)">การตรวจ</span></span><span class="small"><span class="pill p-NC">NC '+nc+'</span> <span class="pill p-OBS">OBS '+obs+'</span></span></div>'}).join('');
+        if(r.qs.some(function(q){return q.s===s})){if(v.r==='CR')cr++;if(v.r==='MA')ma++;if(v.r==='MI')mi++;if(v.r==='OBS')obs++}})});
+    return '<div class="card sys"><span class="n">'+esc(SYS[s].name)+'</span><span class="big">'+n+' <span class="small muted" style="font-family:var(--f-body)">การตรวจ</span></span><span class="small"><span class="pill p-CR">Cr '+cr+'</span> <span class="pill p-MA">Ma '+ma+'</span> <span class="pill p-MI">Mi '+mi+'</span> <span class="pill p-OBS">Obs '+obs+'</span></span></div>'}).join('');
   var teamOpts=teams.map(function(t,i){return !canTeam(i)?'':'<option value="'+i+'">ทีม '+(i+1)+' · หัวหน้า '+esc(t.lead)+'</option>'}).join('');
   var n=list.length+1;
   var today=new Date().toISOString().slice(0,10);
@@ -435,8 +448,8 @@ function renderHome(){
     '<p class="note" style="margin:12px 0">ผู้ตรวจต้องไม่ตรวจงานของตนเอง (ISO 9.2) เลือกทีมที่ไม่ได้สังกัดหน่วยงานที่ถูกตรวจ</p>'+
     ''+(teamOpts?'<button class="btn pri" id="n-go">เริ่มตรวจ</button>':'<span class="ro">คุณยังไม่ได้อยู่ในทีมตรวจ — ดูผลอย่างเดียว (ขอให้ QMR เพิ่มอีเมลของคุณในหน้า “ทีมตรวจ”)</span>')+' <span class="small muted" id="n-err"></span><p class="small muted" id="n-hint" style="margin:8px 0 0"></p></div>'+
    '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">การตรวจทั้งหมด</h2>'+
-    (list.length?'<div class="scroll"><table><thead><tr><th>ชื่อ</th><th>หน่วยงาน</th><th>วันที่</th><th>ระบบ</th><th>ความคืบหน้า</th><th>NC</th><th></th></tr></thead><tbody>'+
-     list.map(function(a){var c=stats(a);return '<tr><td><b>'+esc(a.name)+'</b><div class="small muted">ทีม '+((a.team||0)+1)+' · '+esc((teams[a.team||0]||{}).lead||'')+'</div></td><td>'+esc(a.dept)+'</td><td>'+esc(thDate(a.date))+(a.time?'<div class="small muted">'+esc(a.time)+'</div>':'')+'</td><td>'+(a.systems||[]).map(function(s){return '<span class="tag">'+SYS[s].short+'</span>'}).join('')+'</td><td class="cnt">'+c.done+'/'+c.total+'</td><td>'+(c.NC?'<span class="pill p-NC">'+c.NC+'</span>':'–')+'</td><td><button class="btn sm" data-open="'+a.id+'">เปิด</button></td></tr>'}).join('')+'</tbody></table></div>'
+    (list.length?'<div class="scroll"><table><thead><tr><th>ชื่อ</th><th>หน่วยงาน</th><th>วันที่</th><th>ระบบ</th><th>ความคืบหน้า</th><th>ข้อบกพร่อง</th><th></th></tr></thead><tbody>'+
+     list.map(function(a){var c=stats(a);return '<tr><td><b>'+esc(a.name)+'</b><div class="small muted">ทีม '+((a.team||0)+1)+' · '+esc((teams[a.team||0]||{}).lead||'')+'</div></td><td>'+esc(a.dept)+'</td><td>'+esc(thDate(a.date))+(a.time?'<div class="small muted">'+esc(a.time)+'</div>':'')+'</td><td>'+(a.systems||[]).map(function(s){return '<span class="tag">'+SYS[s].short+'</span>'}).join('')+'</td><td class="cnt">'+c.done+'/'+c.total+'</td><td>'+((c.CR+c.MA+c.MI)?(c.CR?'<span class="pill p-CR">Cr '+c.CR+'</span> ':'')+(c.MA?'<span class="pill p-MA">Ma '+c.MA+'</span> ':'')+(c.MI?'<span class="pill p-MI">Mi '+c.MI+'</span>':''):'–')+'</td><td><button class="btn sm" data-open="'+a.id+'">เปิด</button></td></tr>'}).join('')+'</tbody></table></div>'
      :'<div class="empty">ยังไม่มีการตรวจ เลือกทีมและระบบด้านบน แล้วกด “เริ่มตรวจ” รายการจะแสดงที่นี่ให้ทุกคนในองค์กรเห็นตรงกัน</div>')+
    '</div>'+
    '<p class="small muted" id="modeNote"></p></div>';
@@ -584,24 +597,16 @@ function exHtml(r){
   if(g)h+='<details class="det"><summary>Guidance / แนวทางเอกสาร</summary><div class="dt">'+esc(g)+'</div></details>';
   return h;
 }
-var SEVG='<details class="det" style="margin:0"><summary><b>แนวทางตัดสินระดับความรุนแรงของ NC (Major / Minor) → ใช้เป็นระดับใน CAR</b></summary><div class="dt">'+
- '<p><span class="pill s-MA">MA · Major</span> ข้อบกพร่องร้ายแรง ซึ่งอาจส่งผลต่อการดำรงอยู่ของข้อกำหนด/มาตรฐาน หรือพบความไม่สอดคล้องจำนวนมาก หรือพนักงานส่วนใหญ่ไม่ปฏิบัติตามข้อกำหนด (นิยามตาม FM-MR-10 ของ KST)</p>'+
- '<p><span class="pill s-MI">MI · Minor</span> ข้อบกพร่องเล็กน้อย จำนวนไม่มาก ไม่รุนแรง ยังปฏิบัติตามข้อกำหนด/มาตรฐานได้อย่างถูกต้อง (นิยามตาม FM-MR-10 ของ KST)</p>'+
- '<p class="small muted" style="margin-bottom:4px"><b>เกณฑ์ช่วยตัดสิน (ตั้งต้นเพิ่มเติม — ปรับตามนโยบายของ KST ได้):</b></p><ul>'+
- '<li>เป็น Major ถ้า: ไม่มีระบบ/ไม่มีการปฏิบัติตามข้อกำหนดนั้นเลย · กระทบความปลอดภัยอาหารโดยตรง (CCP/OPRP เกินขีดจำกัดแล้วไม่แก้ไข, การปนเปื้อน, สารตกค้าง) · ฝ่าฝืนกฎหมาย/ข้อกำหนดลูกค้า · พบซ้ำหลายจุดหรือเป็นระบบ · ข้อ Minor เดิมที่ปิดแล้วเกิดซ้ำ</li>'+
- '<li>เป็น Minor ถ้า: เป็นเหตุการณ์เฉพาะจุด/บันทึกบางรายการขาดหรือไม่สมบูรณ์ แต่ระบบยังทำงานและไม่กระทบความปลอดภัยของผลิตภัณฑ์</li>'+
- '<li>ถ้าไม่แน่ใจระหว่างสองระดับ ให้บันทึกหลักฐานและเสนอหัวหน้าทีม/QMR ตัดสิน</li></ul>'+
- '<p class="small muted">ถ้าเพียงข้อสังเกต/โอกาสปรับปรุง ให้เลือก OBS (ออกเป็น CAR ระดับ OBSERVE) · ผลตรวจ NC ที่ยังไม่เลือกระดับ ระบบจะออก CAR เป็น Minor ชั่วคราวและเตือนที่หน้า “สรุปผล”</p></div></details>';
-function sevSuggest(r){
-  var t=(r.title||'')+' '+((r.ex&&r.ex.crit)||'');
-  return (r.ex&&r.ex.crit)||/CCP|OPRP|ขีดจำกัดวิกฤต|ขอบเขตวิกฤต|สารตกค้าง|ปนเปื้อน|ฟู้ดดีเฟนส์|food defense|recall|เรียกคืน/i.test(t)?'MA':'MI';
-}
-function sevBox(r,v){
-  if(v.r!=='NC')return '';
-  var sg=sevSuggest(r);
-  return '<div class="sevbox"><span class="small"><b>ระดับ CAR:</b></span> <div class="res" role="group" aria-label="ระดับความรุนแรง">'+['MA','MI'].map(function(x){return '<button data-s="'+x+'" aria-pressed="'+(v.s===x)+'">'+(x==='MA'?'Major':'Minor')+'</button>'}).join('')+'</div>'+
-   '<span class="small muted">ระบบแนะนำ: '+(sg==='MA'?'Major (ข้อวิกฤต CCP/OPRP/สารตกค้าง/การปนเปื้อน — โปรดตรวจซ้ำ)':'Minor (หากเป็นเฉพาะจุด)')+'</span></div>';
-}
+var SEVG='<details class="det" style="margin:0"><summary><b>ความหมายของผลการตรวจ (Pass / Critical / Major / Minor / Obs / Comment)</b></summary><div class="dt">'+
+ '<p><span class="pill p-PASS">Pass</span> ปฏิบัติตามข้อกำหนดครบถ้วนและถูกต้อง</p>'+
+ '<p><span class="pill p-CR">Critical</span> ข้อบกพร่องวิกฤต ที่กระทบความปลอดภัยของอาหาร/ผู้บริโภค หรือผิดกฎหมายและข้อกำหนดลูกค้าโดยตรง ต้องแก้ไขทันที (เกณฑ์ตั้งต้นที่ผมเพิ่ม — ปรับตามนโยบาย KST ได้)</p>'+
+ '<p><span class="pill p-MA">Major</span> ข้อบกพร่องร้ายแรง ซึ่งอาจส่งผลต่อการดำรงอยู่ของข้อกำหนด/มาตรฐาน หรือพบความไม่สอดคล้องจำนวนมาก หรือพนักงานส่วนใหญ่ไม่ปฏิบัติตามข้อกำหนด (นิยาม FM-MR-10)</p>'+
+ '<p><span class="pill p-MI">Minor</span> ข้อบกพร่องเล็กน้อย จำนวนไม่มาก ไม่รุนแรง ยังปฏิบัติตามข้อกำหนดได้อย่างถูกต้อง (นิยาม FM-MR-10)</p>'+
+ '<p><span class="pill p-OBS">Obs</span> ยังไม่พบข้อบกพร่อง แต่คาดว่าจะมีปัญหาในอนาคต หรือทำให้ดีกว่าที่เป็นอยู่ได้ (นิยาม FM-MR-10)</p>'+
+ '<p><span class="pill p-CM">Comment</span> ความเห็น/ข้อเสนอแนะ — ไม่ออกใบ CAR</p>'+
+ '<p><span class="pill p-NA">N/A</span> ข้อกำหนดไม่เกี่ยวข้องกับพื้นที่/หน่วยงานที่เข้าตรวจ (นิยาม FM-MR-10) — ไม่นับในคะแนนความสอดคล้อง</p>'+
+ '<p><span class="pill p-NA">N/A</span> ข้อกำหนดไม่เกี่ยวข้องกับพื้นที่/หน่วยงานที่เข้าตรวจ (นิยาม FM-MR-10) — ไม่นับในคะแนนความสอดคล้อง</p>'+
+ '<p class="small muted">Critical, Major, Minor และ Obs จะออกใบ CAR ตามระดับที่เลือก · Pass, Comment และ N/A ไม่ออก CAR</p></div></details>';
 function curAudit(){return S.cur&&S.audits[S.cur]}
 function renderAudit(){
   var a=curAudit(),el=$('v-audit');
@@ -611,20 +616,20 @@ function renderAudit(){
   var head='<div class="card"><div class="row" style="justify-content:space-between"><div><h2 style="font-size:19px">'+esc(a.name)+' · '+esc(a.dept)+'</h2><div class="small muted">FM-MR-10 · วันที่ตรวจ '+esc(thDate(a.date))+(a.time?' เวลา '+esc(a.time):'')+' · '+(a.systems||[]).map(function(s){return '<span class="tag">'+esc(SYS[s].name)+'</span>'}).join('')+'</div></div></div>'+
     '<div class="small" style="margin-top:8px"><b>หัวหน้าทีม</b> '+esc(t.lead)+' · <b>ผู้ตรวจ</b> '+esc(t.members.join(', '))+(t.observers&&t.observers.length?' · <b>ผู้สังเกตการณ์</b> '+esc(t.observers.join(', ')):'')+'</div></div>';
   var bar='<div class="stick"><div class="prog"><i style="width:'+(c.total?Math.round(c.done/c.total*100):0)+'%"></i></div><span class="cnt" id="cnt">'+c.done+'/'+c.total+'</span>'+
-    '<span class="pill p-PASS" id="c-PASS">PASS '+c.PASS+'</span><span class="pill p-OBS" id="c-OBS">OBS '+c.OBS+'</span><span class="pill p-NC" id="c-NC">NC '+c.NC+(c.NC?' (Major '+c.MA+' · Minor '+c.MI+(c.NS?' · ยังไม่ระบุ '+c.NS:'')+')':'')+'</span><span class="pill p-NA" id="c-NA">N/A '+c.NA+'</span>'+
-    '<select id="flt" style="width:auto"><option value="all">ทุกข้อ</option><option value="open">ยังไม่ตรวจ</option><option value="NC">เฉพาะ NC</option><option value="OBS">เฉพาะ OBS</option></select></div>';
+    pillRes(c)+
+    '<select id="flt" style="width:auto"><option value="all">ทุกข้อ</option><option value="open">ยังไม่ตรวจ</option><option value="FIND">เฉพาะข้อบกพร่อง (Cr/Ma/Mi/Obs)</option><option value="CR">เฉพาะ Critical</option><option value="MA">เฉพาะ Major</option><option value="MI">เฉพาะ Minor</option><option value="OBS">เฉพาะ Obs</option><option value="CM">เฉพาะ Comment</option><option value="NA">เฉพาะ N/A</option></select></div>';
   var body='',last='';
   rows.forEach(function(r){
     var v=(a.results||{})[r.id]||{};
-    if(S.filter==='open'&&v.r)return;if((S.filter==='NC'||S.filter==='OBS')&&v.r!==S.filter)return;
+    if(S.filter==='open'&&v.r)return;if(S.filter==='FIND'&&!FIND[v.r])return;if(RES.indexOf(S.filter)>=0&&v.r!==S.filter)return;
     if(r.group!==last){body+='<div class="sec">'+esc(r.group)+'</div>';last=r.group}
     body+='<div class="item" data-id="'+r.id+'"><div class="cl">'+r.qs.map(function(q){return '<span>'+esc(q.c)+'</span>'}).join('')+'</div><div><h4>'+esc(r.title)+'</h4>'+
       r.qs.map(function(q){return '<p class="q">'+(r.qs.length>1?'<span class="tag">'+SYS[q.s].short+' '+esc(q.c)+'</span>':'')+esc(q.q)+'</p>'+detHtml(q)+(q.ex?exHtml({ex:q.ex}):'')}).join('')+exHtml(r)+'</div>'+
-      '<div class="ctl"><div class="res" role="group" aria-label="ผลการตรวจ">'+['PASS','OBS','NC','NA'].map(function(x){return '<button data-r="'+x+'" aria-pressed="'+(v.r===x)+'"'+(ed?'':' disabled')+'>'+(x==='NA'?'N/A':x)+'</button>'}).join('')+'</div>'+
-      '<div class="sevslot">'+sevBox(r,v)+'</div><textarea placeholder="บันทึกหลักฐาน / ข้อสังเกต" aria-label="บันทึก"'+(ed?'':' readonly')+'>'+esc(v.n||'')+'</textarea></div></div>';
+      '<div class="ctl"><div class="res" role="group" aria-label="ผลการตรวจ">'+RES.map(function(x){return '<button data-r="'+x+'" aria-pressed="'+(v.r===x)+'"'+(ed?'':' disabled')+'>'+RL[x]+'</button>'}).join('')+'</div>'+
+      '<textarea placeholder="บันทึกหลักฐาน / ข้อสังเกต" aria-label="บันทึก"'+(ed?'':' readonly')+'>'+esc(v.n||'')+'</textarea></div></div>';
   });
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'+roBanner(a)+head+'<div class="card" style="padding:10px 14px">'+SEVG+'</div>'+bar+'<div>'+(body||'<div class="empty">ไม่มีข้อที่ตรงกับตัวกรอง</div>')+'</div>'+
-   '<div class="note">คำจำกัดความ: PASS สอดคล้อง · OBS ข้อสังเกต/โอกาสปรับปรุง · NC ไม่สอดคล้อง (ออก CAR · เลือก Major/Minor) · N/A ไม่เกี่ยวข้องกับพื้นที่ที่ตรวจ</div>'+
+   '<div class="note">Critical / Major / Minor / Obs จะออกใบ CAR ตามระดับที่เลือก · Pass, Comment และ N/A ไม่ออก CAR</div>'+
    '<div class="row"><button class="btn pri" id="a-sum">ไปหน้าสรุปผล / ออก CAR</button>'+(ed?'<button class="btn" id="a-del">ลบการตรวจนี้</button>':'')+'<span class="small muted" id="a-conf"></span></div></div>';
   $('flt').value=S.filter;$('flt').onchange=function(){S.filter=this.value;renderAudit()};
   $('a-sum').onclick=function(){show('sum')};
@@ -636,15 +641,9 @@ function renderAudit(){
     var id=it.dataset.id;
     Array.prototype.forEach.call(it.querySelectorAll('.ctl>.res button'),function(b){b.onclick=function(){
       a.results=a.results||{};var cur=a.results[id]||{};
-      cur.r=(cur.r===b.dataset.r)?'':b.dataset.r;if(cur.r!=='NC')delete cur.s;a.results[id]=cur;saveAudit(a);
+      cur.r=(cur.r===b.dataset.r)?'':b.dataset.r;a.results[id]=cur;saveAudit(a);
       Array.prototype.forEach.call(it.querySelectorAll('.ctl>.res button'),function(x){x.setAttribute('aria-pressed',x.dataset.r===cur.r)});
-      bindSev(it,id);refreshCounts(a);}});
-    var bindSev=function(it,id){
-      var rw=rows.filter(function(x){return x.id===id})[0],cur=a.results[id]||{};
-      it.querySelector('.sevslot').innerHTML=sevBox(rw,cur);
-      Array.prototype.forEach.call(it.querySelectorAll('.sevslot [data-s]'),function(sb){sb.onclick=function(){
-        var c2=a.results[id];c2.s=(c2.s===sb.dataset.s)?'':sb.dataset.s;saveAudit(a);bindSev(it,id);refreshCounts(a)}});
-    };bindSev(it,id);
+      refreshCounts(a);}});
     it.querySelector('textarea').oninput=function(){a.results=a.results||{};var cur=a.results[id]||{};cur.n=this.value;a.results[id]=cur;saveAudit(a)};
   });
 }
@@ -652,11 +651,11 @@ function refreshCounts(a){
   var c=stats(a),p=document.querySelector('.stick .prog i');if(!p)return;
   p.style.width=(c.total?Math.round(c.done/c.total*100):0)+'%';
   $('cnt').textContent=c.done+'/'+c.total;
-  $('c-PASS').textContent='PASS '+c.PASS;$('c-OBS').textContent='OBS '+c.OBS;$('c-NC').textContent='NC '+c.NC+(c.NC?' (Major '+c.MA+' · Minor '+c.MI+(c.NS?' · ยังไม่ระบุ '+c.NS:'')+')':'');$('c-NA').textContent='N/A '+c.NA;
+  RES.forEach(function(k){var e=$('c-'+k);if(e)e.textContent=RL[k]+' '+c[k]});
 }
 
 /* ---------- CAR (FM-MR-07) ---------- */
-var SEVS={MA:'MAJOR',MI:'MINOR',OBS:'OBSERVE'};
+var SEVS={CR:'CRITICAL',MA:'MAJOR',MI:'MINOR',OBS:'OBSERVE'};
 function today(){return new Date().toISOString().slice(0,10)}
 function dmy(d){if(!d)return '';var p=String(d).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d}
 function saveCar(c,now){
@@ -677,17 +676,17 @@ function nextNo(year){
 }
 function findings(a){
   var rows=rowsFor(a.systems||[]);
-  return rows.filter(function(r){var v=(a.results||{})[r.id];return v&&(v.r==='NC'||v.r==='OBS')});
+  return rows.filter(function(r){var v=(a.results||{})[r.id];return v&&FIND[v.r]});
 }
 function genCars(a){
   var year=+(a.date||today()).slice(0,4),t=getTeams()[a.team||0]||{lead:'',members:[]},n=0;
   findings(a).forEach(function(r){
     var id='car_'+a.id+'_'+r.id;
     var v=a.results[r.id],stds=[];
-    if(S.cars[id]){var ec=S.cars[id],ns=v.r==='NC'?(v.s==='MA'?'MA':'MI'):'OBS';if(ec.sev!==ns&&!(ec.cause&&ec.fix)&&(v.r!=='NC'||v.s)){ec.sev=ns;ec.sevSet=true;saveCar(ec,true)}return}
+    if(S.cars[id]){var ec=S.cars[id];if(ec.sev!==v.r&&!(ec.cause&&ec.fix)){ec.sev=v.r;saveCar(ec,true)}return}
     r.qs.forEach(function(q){if(stds.indexOf(SYS[q.s].name)<0)stds.push(SYS[q.s].name)});
     var c={id:id,no:nextNo(year),auditId:a.id,rowId:r.id,auditName:a.name,auditDate:a.date,team:a.team,type:'CAR',
-      sev:v.r==='NC'?(v.s==='MA'?'MA':'MI'):'OBS',sevSet:v.r!=='NC'||!!v.s,std:stds.join(' / '),clause:r.qs.map(function(q){return q.c}).filter(function(x,i,ar){return ar.indexOf(x)===i}).join(' / '),title:r.title,
+      sev:v.r,std:stds.join(' / '),clause:r.qs.map(function(q){return q.c}).filter(function(x,i,ar){return ar.indexOf(x)===i}).join(' / '),title:r.title,
       dept:a.dept,owner:a.dept,area:a.dept,detail:v.n||('(ยังไม่ได้บันทึกรายละเอียด) '+r.title),evidence:'',issued:today(),
       auditors:[t.lead+' (หัวหน้าทีม)'].concat(t.members).join(', '),auditees:'',
       cause:'',fix:'',fixOwner:'',fixDue:'',prevent:'',prevOwner:'',prevDue:'',f1d:'',f1ok:'',f2d:'',f2ok:'',closeRes:'',closeDate:'',newNo:'',created:Date.now()};
@@ -737,12 +736,12 @@ function renderCars(){
   var audits=Object.keys(S.audits).map(function(k){return S.audits[k]});
   var vis=list.filter(function(c){return (fa==='all'||c.auditId===fa)&&(fs==='all'||carStatus(c)[0]===fs)}).sort(function(x,y){return String(x.no).localeCompare(String(y.no))});
   var sts=['รอตอบกลับ','รอติดตามผล','เลยกำหนด','ปิดแล้ว','ออก CAR ใหม่'];
-  var cnt={MA:0,MI:0,OBS:0};vis.forEach(function(c){cnt[c.sev]=(cnt[c.sev]||0)+1});
+  var cnt={CR:0,MA:0,MI:0,OBS:0};vis.forEach(function(c){cnt[c.sev]=(cnt[c.sev]||0)+1});
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:14px"><div><h1 style="font-size:22px">ใบ CAR / PAR (FM-MR-07) และทะเบียนคุมใบ CAR (FM-MR-08)</h1>'+
    '<p class="muted" style="margin:6px 0 0;max-width:70ch">ออกอัตโนมัติจากข้อ NC/OBS ในหน้า “สรุปผล” ผู้ตรวจเติมสาเหตุ แนวทางแก้ไข การป้องกัน และติดตามผลจนปิด CAR ได้ในหน้านี้ ควรออก CAR ภายใน 1 วันหลังวันตรวจ</p></div>'+
    '<div class="card"><div class="row"><label class="f" style="min-width:200px">การตรวจ<select id="cf-a"><option value="all">ทั้งหมด</option>'+audits.map(function(a){return '<option value="'+a.id+'"'+(fa===a.id?' selected':'')+'>'+esc(a.name+' · '+a.dept)+'</option>'}).join('')+'</select></label>'+
    '<label class="f" style="min-width:150px">สถานะ<select id="cf-s"><option value="all">ทั้งหมด</option>'+sts.map(function(s){return '<option'+(fs===s?' selected':'')+'>'+s+'</option>'}).join('')+'</select></label>'+
-   '<span class="small" style="margin-left:auto">ทั้งหมด '+vis.length+' ใบ · <span class="pill s-MA">MA '+cnt.MA+'</span> <span class="pill s-MI">MI '+cnt.MI+'</span> <span class="pill s-OBS">OBS '+cnt.OBS+'</span></span></div>'+
+   '<span class="small" style="margin-left:auto">ทั้งหมด '+vis.length+' ใบ · <span class="pill s-CR">CR '+cnt.CR+'</span> <span class="pill s-MA">MA '+cnt.MA+'</span> <span class="pill s-MI">MI '+cnt.MI+'</span> <span class="pill s-OBS">OBS '+cnt.OBS+'</span></span></div>'+
    '<div class="row" style="margin-top:10px"><button class="btn" id="c-csv">ส่งออกทะเบียน (CSV)</button><button class="btn" id="c-print">พิมพ์ใบ CAR ที่แสดง ('+vis.length+')</button></div></div>'+
    (vis.length?vis.map(function(c){return '<details class="card car" data-c="'+c.id+'"'+(S.carOpen===c.id?' open':'')+'><summary>'+carHeadHtml(c)+'</summary><div class="cb"><div id="cf-'+c.id+'"></div></div></details>'}).join(''):'<div class="empty">ยังไม่มีใบ CAR — เปิดการตรวจ กรอกผล NC/OBS แล้วกด “ออกใบ CAR” ที่หน้าสรุปผล</div>')+'</div>';
   $('cf-a').onchange=function(){S.carFilter=this.value;renderCars()};
@@ -772,7 +771,7 @@ function dl(text,name){
 function csvRows(rows){return rows.map(function(r){return r.map(function(x){return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n')}
 function carCsv(list){
   var teams=getTeams();
-  var out=[['ทีม','วันที่ Audit','วันที่ออก CAR','CAR No.','ประเภท','ข้อกำหนด','ระดับ (MA/MI/OBS)','รายละเอียดข้อบกพร่อง','ฝ่ายที่โดนตรวจ','ฝ่ายรับผิดชอบ','สาเหตุ','การแก้ไข','การป้องกัน','กำหนดแก้ไข','กำหนดป้องกัน','ติดตามผล 1','ผล 1','ติดตามผล 2','ผล 2','สรุปปิด','วันที่ปิด','CAR ใหม่','สถานะ']];
+  var out=[['ทีม','วันที่ Audit','วันที่ออก CAR','CAR No.','ประเภท','ข้อกำหนด','ระดับ (CR/MA/MI/OBS)','รายละเอียดข้อบกพร่อง','ฝ่ายที่โดนตรวจ','ฝ่ายรับผิดชอบ','สาเหตุ','การแก้ไข','การป้องกัน','กำหนดแก้ไข','กำหนดป้องกัน','ติดตามผล 1','ผล 1','ติดตามผล 2','ผล 2','สรุปปิด','วันที่ปิด','CAR ใหม่','สถานะ']];
   list.forEach(function(c){out.push([c.team!=null?'ทีม '+(c.team+1)+' '+((teams[c.team]||{}).lead||''):'',dmy(c.auditDate),dmy(c.issued),c.no,c.type,c.clause,c.sev,c.detail,c.dept,c.owner,c.cause,c.fix,c.prevent,dmy(c.fixDue),dmy(c.prevDue),dmy(c.f1d),c.f1ok==='Y'?'มีประสิทธิผล':c.f1ok==='N'?'ไม่มีประสิทธิผล':'',dmy(c.f2d),c.f2ok==='Y'?'มีประสิทธิผล':c.f2ok==='N'?'ไม่มีประสิทธิผล':'',c.closeRes==='close'?'ปิดได้':c.closeRes==='reopen'?'ออกใหม่':'',dmy(c.closeDate),c.newNo,carStatus(c)[0]])});
   return csvRows(out);
 }
@@ -793,7 +792,7 @@ function carPrint(c){
    '<td>มาตรฐาน/ข้อกำหนด<br>'+box(/9001/.test(s))+' ISO 9001 : 2015 &nbsp; '+box(/14001/.test(s))+' ISO 14001 : 2015<br>'+box(/FSSC/.test(s))+' FSSC 22000 &nbsp; '+box(/BAP/.test(s))+' BAP SPS 6.0</td></tr>'+
    '<tr><td colspan="2">หน่วยงาน/ฝ่าย (ที่รับผิดชอบการแก้ไข): <b>'+esc(c.owner)+'</b></td></tr>'+
    '<tr><td>ผู้ตรวจ (Auditor): '+esc(c.auditors)+'</td><td>ผู้ถูกตรวจ (Auditee): '+esc(c.auditees)+'</td></tr>'+
-   '<tr><td colspan="2"><b>ข้อบกพร่อง / สิ่งที่ไม่สอดคล้องตามข้อกำหนด</b> &nbsp; '+box(c.sev==='MA')+' MAJOR &nbsp; '+box(c.sev==='MI')+' MINOR &nbsp; '+box(c.sev==='OBS')+' OBSERVE<br><div style="min-height:70px;white-space:pre-wrap">'+esc(c.detail)+'</div>'+
+   '<tr><td colspan="2"><b>ข้อบกพร่อง / สิ่งที่ไม่สอดคล้องตามข้อกำหนด</b> &nbsp; '+box(c.sev==='CR')+' CRITICAL &nbsp; '+box(c.sev==='MA')+' MAJOR &nbsp; '+box(c.sev==='MI')+' MINOR &nbsp; '+box(c.sev==='OBS')+' OBSERVE<br><div style="min-height:70px;white-space:pre-wrap">'+esc(c.detail)+'</div>'+
    'พื้นที่/กระบวนการ: '+esc(c.area)+' &nbsp;&nbsp; ข้อกำหนด: <b>'+esc(c.clause)+'</b> &nbsp;&nbsp; หลักฐานอ้างอิง: '+esc(c.evidence)+'<div style="margin-top:10px">ลงชื่อ ........................................ หัวหน้าทีมตรวจติดตาม &nbsp; วันที่ ....../....../......</div></td></tr>'+
    '<tr><td style="width:50%"><b>สาเหตุ</b><div style="min-height:50px;white-space:pre-wrap">'+esc(c.cause)+'</div></td><td><b>แนวทางแก้ไข</b><div style="min-height:50px;white-space:pre-wrap">'+esc(c.fix)+'</div>ผู้รับผิดชอบ: '+esc(c.fixOwner)+' &nbsp; กำหนดเสร็จ: '+esc(dmy(c.fixDue))+'</td></tr>'+
    '<tr><td colspan="2"><b>การป้องกันการเกิดซ้ำ</b><div style="min-height:40px;white-space:pre-wrap">'+esc(c.prevent)+'</div>ผู้รับผิดชอบ: '+esc(c.prevOwner)+' &nbsp; กำหนดเสร็จ: '+esc(dmy(c.prevDue))+'</td></tr>'+
@@ -807,7 +806,7 @@ function repAudit(){return S.audits[S.repId||S.cur]||null}
 function repData(a){
   var cars=Object.keys(S.cars).map(function(k){return S.cars[k]}).filter(function(c){return c.auditId===a.id}).sort(function(x,y){return String(x.no).localeCompare(String(y.no))});
   var rep=a.report||{},fs=findings(a),good=rowsFor(a.systems).filter(function(r){var v=(a.results||{})[r.id];return v&&v.r==='PASS'&&v.n});
-  var cnt={MA:0,MI:0,OBS:0};cars.forEach(function(c){cnt[c.sev]++});
+  var cnt={CR:0,MA:0,MI:0,OBS:0};cars.forEach(function(c){cnt[c.sev]++});
   return{cars:cars,rep:rep,fs:fs,good:good,cnt:cnt,pending:fs.filter(function(r){return !S.cars['car_'+a.id+'_'+r.id]}).length};
 }
 function renderRep(){
@@ -825,15 +824,15 @@ function renderRep(){
     '<label class="f wide">วัตถุประสงค์ / ขอบเขตการตรวจ<textarea data-r="scope"'+dis+'>'+esc(r.scope||'')+'</textarea></label>'+
     '<label class="f wide">จุดเด่น / ข้อสังเกตเชิงบวก<textarea data-r="good"'+dis+' placeholder="'+(d.good.length?'เช่น '+esc(d.good[0].title):'')+'">'+esc(r.good||'')+'</textarea></label>'+
     '<label class="f wide">สรุปผลการตรวจ / ข้อเสนอแนะ<textarea data-r="concl"'+dis+'>'+esc(r.concl||'')+'</textarea></label></div></div>'+
-   '<div class="card scroll"><b>ผลการตรวจ: MA '+d.cnt.MA+' · MI '+d.cnt.MI+' · OBS '+d.cnt.OBS+' · รวม CAR '+d.cars.length+' ใบ</b>'+
-    '<table style="margin-top:8px"><thead><tr><th>ข้อกำหนด</th><th>รายละเอียดข้อบกพร่อง</th><th>MA</th><th>MI</th><th>OBS</th><th>CAR No.</th></tr></thead><tbody>'+
-    (d.cars.length?d.cars.map(function(c){return '<tr><td>'+esc(c.clause)+'</td><td>'+esc(c.detail)+'</td><td>'+(c.sev==='MA'?'✓':'')+'</td><td>'+(c.sev==='MI'?'✓':'')+'</td><td>'+(c.sev==='OBS'?'✓':'')+'</td><td>'+esc(c.no)+'</td></tr>'}).join(''):'<tr><td colspan="6" class="muted">ยังไม่มีใบ CAR</td></tr>')+'</tbody></table></div>'+
+   '<div class="card scroll"><b>ผลการตรวจ: CR '+d.cnt.CR+' · MA '+d.cnt.MA+' · MI '+d.cnt.MI+' · OBS '+d.cnt.OBS+' · รวม CAR '+d.cars.length+' ใบ</b>'+
+    '<table style="margin-top:8px"><thead><tr><th>ข้อกำหนด</th><th>รายละเอียดข้อบกพร่อง</th><th>CR</th><th>MA</th><th>MI</th><th>OBS</th><th>CAR No.</th></tr></thead><tbody>'+
+    (d.cars.length?d.cars.map(function(c){return '<tr><td>'+esc(c.clause)+'</td><td>'+esc(c.detail)+'</td><td>'+(c.sev==='CR'?'✓':'')+'</td><td>'+(c.sev==='MA'?'✓':'')+'</td><td>'+(c.sev==='MI'?'✓':'')+'</td><td>'+(c.sev==='OBS'?'✓':'')+'</td><td>'+esc(c.no)+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">ยังไม่มีใบ CAR</td></tr>')+'</tbody></table></div>'+
    '<div class="row"><button class="btn pri" id="r-print">พิมพ์ / บันทึก PDF</button><button class="btn" id="r-csv">ส่งออก CSV</button><span class="hint">รูปแบบหน้ารายงานจัดตามโครงของ FM-MR-27 (R03) — ควรเทียบกับฟอร์มจริงก่อนใช้เป็นเอกสารควบคุม</span></div></div>';
   $('r-a').onchange=function(){S.repId=this.value;renderRep()};
   if(ed)Array.prototype.forEach.call(el.querySelectorAll('[data-r]'),function(i){i.oninput=function(){a.report=a.report||{};a.report[i.dataset.r]=i.value;saveAudit(a)}});
   $('r-print').onclick=function(){printHtml(repPrint(a))};
   $('r-csv').onclick=function(){
-    var out=[['FM-MR-27 รายงานการตรวจติดตามภายใน',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['เวลาที่เข้าตรวจ',a.time||''],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],['ผู้สังเกตการณ์',(t.observers||[]).join(', ')],['MA',d.cnt.MA],['MI',d.cnt.MI],['OBS',d.cnt.OBS],['รวม CAR',d.cars.length],[],['ข้อกำหนด','รายละเอียด','ระดับ','CAR No.']];
+    var out=[['FM-MR-27 รายงานการตรวจติดตามภายใน',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['เวลาที่เข้าตรวจ',a.time||''],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],['ผู้สังเกตการณ์',(t.observers||[]).join(', ')],['CR',d.cnt.CR],['MA',d.cnt.MA],['MI',d.cnt.MI],['OBS',d.cnt.OBS],['รวม CAR',d.cars.length],[],['ข้อกำหนด','รายละเอียด','ระดับ','CAR No.']];
     d.cars.forEach(function(c){out.push([c.clause,c.detail,c.sev,c.no])});dl(csvRows(out),'FM-MR-27_'+a.name+'_'+a.dept+'.csv')};
 }
 function schedPrint(){
@@ -853,9 +852,9 @@ function repPrint(a){
    '<tr><td colspan="2">หน่วยงานที่ถูกตรวจ: <b>'+esc(a.dept)+'</b> &nbsp; ผู้ถูกตรวจ: '+esc(r.auditees||'')+'</td></tr>'+
    '<tr><td colspan="2">หัวหน้าทีมตรวจ: <b>'+esc(t.lead)+'</b> &nbsp; ผู้ตรวจ: '+esc(t.members.join(', '))+(t.observers&&t.observers.length?' &nbsp; ผู้สังเกตการณ์: '+esc(t.observers.join(', ')):'')+'</td></tr>'+
    '<tr><td colspan="2">วัตถุประสงค์/ขอบเขตการตรวจ: <div style="white-space:pre-wrap">'+esc(r.scope||'')+'</div></td></tr></table>'+
-   '<table style="margin-top:8px"><tr><th style="width:12%">ข้อกำหนด</th><th>รายละเอียดข้อบกพร่อง</th><th style="width:5%">MA</th><th style="width:5%">MI</th><th style="width:6%">OBS</th><th style="width:11%">CAR No.</th></tr>'+
-   (d.cars.length?d.cars.map(function(c){return '<tr><td>'+esc(c.clause)+'</td><td style="white-space:pre-wrap">'+esc(c.detail)+'</td><td style="text-align:center">'+(c.sev==='MA'?'✓':'')+'</td><td style="text-align:center">'+(c.sev==='MI'?'✓':'')+'</td><td style="text-align:center">'+(c.sev==='OBS'?'✓':'')+'</td><td>'+esc(c.no)+'</td></tr>'}).join(''):'<tr><td colspan="6" style="text-align:center">ไม่พบข้อบกพร่อง</td></tr>')+
-   '<tr><td colspan="2" style="text-align:right"><b>TOTAL CARS '+d.cars.length+'</b></td><td style="text-align:center"><b>'+d.cnt.MA+'</b></td><td style="text-align:center"><b>'+d.cnt.MI+'</b></td><td style="text-align:center"><b>'+d.cnt.OBS+'</b></td><td></td></tr></table>'+
+   '<table style="margin-top:8px"><tr><th style="width:12%">ข้อกำหนด</th><th>รายละเอียดข้อบกพร่อง</th><th style="width:5%">CR</th><th style="width:5%">MA</th><th style="width:5%">MI</th><th style="width:6%">OBS</th><th style="width:11%">CAR No.</th></tr>'+
+   (d.cars.length?d.cars.map(function(c){return '<tr><td>'+esc(c.clause)+'</td><td style="white-space:pre-wrap">'+esc(c.detail)+'</td><td style="text-align:center">'+(c.sev==='CR'?'✓':'')+'</td><td style="text-align:center">'+(c.sev==='MA'?'✓':'')+'</td><td style="text-align:center">'+(c.sev==='MI'?'✓':'')+'</td><td style="text-align:center">'+(c.sev==='OBS'?'✓':'')+'</td><td>'+esc(c.no)+'</td></tr>'}).join(''):'<tr><td colspan="7" style="text-align:center">ไม่พบข้อบกพร่อง</td></tr>')+
+   '<tr><td colspan="2" style="text-align:right"><b>TOTAL CARS '+d.cars.length+'</b></td><td style="text-align:center"><b>'+d.cnt.CR+'</b></td><td style="text-align:center"><b>'+d.cnt.MA+'</b></td><td style="text-align:center"><b>'+d.cnt.MI+'</b></td><td style="text-align:center"><b>'+d.cnt.OBS+'</b></td><td></td></tr></table>'+
    '<table style="margin-top:8px"><tr><td>จุดเด่น / ข้อสังเกตเชิงบวก<div style="min-height:40px;white-space:pre-wrap">'+esc(r.good||'')+'</div></td></tr><tr><td>สรุปผลการตรวจ / ข้อเสนอแนะ<div style="min-height:50px;white-space:pre-wrap">'+esc(r.concl||'')+'</div></td></tr></table>'+
    '<div class="sg"><div>ลงชื่อ ................................<br>หัวหน้าทีมตรวจติดตาม<br>วันที่ ....../....../......</div><div>ลงชื่อ ................................<br>ผู้ถูกตรวจ / หัวหน้าหน่วยงาน<br>วันที่ ....../....../......</div><div>ลงชื่อ ................................<br>QMR / ผู้ทบทวน<br>วันที่ ....../....../......</div></div></div>';
 }
@@ -865,7 +864,7 @@ function csvOf(a){
   var rows=rowsFor(a.systems),teams=getTeams(),t=teams[a.team||0]||{lead:'',members:[]};
   var out=[['FM-MR-10 รายการตรวจสอบ',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['เวลาที่เข้าตรวจ',a.time||''],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],['ผู้สังเกตการณ์',(t.observers||[]).join(', ')],[],['กลุ่ม','ข้อกำหนด','หัวข้อ','ผลตรวจ','บันทึก']];
   rows.forEach(function(r){var v=(a.results||{})[r.id]||{};
-    out.push([r.group,r.qs.map(function(q){return SYS[q.s].short+' '+q.c}).join(' / '),r.title,v.r==='NA'?'N/A':(v.r==='NC'?('NC'+(v.s==='MA'?' (Major)':v.s==='MI'?' (Minor)':'')):(v.r||'')),v.n||''])});
+    out.push([r.group,r.qs.map(function(q){return SYS[q.s].short+' '+q.c}).join(' / '),r.title,(RL[v.r]||''),v.n||''])});
   return csvRows(out);
 }
 function renderSum(){
@@ -873,33 +872,33 @@ function renderSum(){
   if(!a){el.innerHTML='<div class="empty">ยังไม่ได้เลือกการตรวจ ไปที่ “ภาพรวม” เพื่อเปิดรายการ</div>';return}
   var rows=rowsFor(a.systems),c=stats(a),ed=canEdit(a);
   var per=a.systems.map(function(s){
-    var k={PASS:0,OBS:0,NC:0,NA:0,open:0};
-    rows.forEach(function(r){if(!r.qs.some(function(q){return q.s===s}))return;var v=(a.results||{})[r.id];if(v&&v.r)k[v.r]++;else k.open++});
-    var ap=k.PASS+k.OBS+k.NC;
-    return '<tr><td><b>'+esc(SYS[s].name)+'</b></td><td>'+k.PASS+'</td><td>'+k.OBS+'</td><td>'+k.NC+'</td><td>'+k.NA+'</td><td>'+k.open+'</td><td>'+(ap?Math.round(k.PASS/ap*100)+'%':'–')+'</td></tr>'}).join('');
+    var k={PASS:0,CR:0,MA:0,MI:0,OBS:0,CM:0,NA:0,open:0};
+    rows.forEach(function(r){if(!r.qs.some(function(q){return q.s===s}))return;var v=(a.results||{})[r.id];if(v&&v.r&&k[v.r]!=null)k[v.r]++;else k.open++});
+    var ap=k.PASS+k.CR+k.MA+k.MI+k.OBS;
+    return '<tr><td><b>'+esc(SYS[s].name)+'</b></td><td>'+k.PASS+'</td><td>'+k.CR+'</td><td>'+k.MA+'</td><td>'+k.MI+'</td><td>'+k.OBS+'</td><td>'+k.CM+'</td><td>'+k.NA+'</td><td>'+k.open+'</td><td>'+(ap?Math.round(k.PASS/ap*100)+'%':'–')+'</td></tr>'}).join('');
   var fs=findings(a),have=fs.filter(function(r){return S.cars['car_'+a.id+'_'+r.id]}).length;
   if(ed)fs.forEach(function(r){var v=a.results[r.id],ec=S.cars['car_'+a.id+'_'+r.id];if(!ec)return;
-    var ns=v.r==='NC'?(v.s==='MA'?'MA':v.s==='MI'?'MI':ec.sev):'OBS';if(ec.sev!==ns&&!(ec.cause&&ec.fix)){ec.sev=ns;saveCar(ec,true)}});
+    if(ec.sev!==v.r&&!(ec.cause&&ec.fix)){ec.sev=v.r;saveCar(ec,true)}});
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+roBanner(a)+'<div><h1 style="font-size:22px">สรุปผล · '+esc(a.name)+'</h1><p class="muted" style="margin:4px 0 0">'+esc(a.dept)+' · '+esc(thDate(a.date))+' · ตรวจแล้ว '+c.done+' จาก '+c.total+' ข้อ</p></div>'+
-   '<div class="card scroll"><table><thead><tr><th>ระบบ</th><th>PASS</th><th>OBS</th><th>NC</th><th>N/A</th><th>ค้าง</th><th>สอดคล้อง</th></tr></thead><tbody>'+per+'</tbody></table>'+
-   '<p class="small muted" style="margin:8px 0 0">สอดคล้อง = PASS ÷ (PASS + OBS + NC) ข้อร่วมระหว่างระบบนับให้ทุกระบบที่เลือก</p></div>'+
-   '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">ข้อพบ NC / OBS ('+fs.length+') · ออก CAR แล้ว '+have+'</h2><div class="small" style="margin-bottom:8px"><span class="pill s-MA">Major '+c.MA+'</span> <span class="pill s-MI">Minor '+c.MI+'</span> <span class="pill s-OBS">OBS '+c.OBS+'</span>'+(c.NS?' <span class="pill p-NC">NC ยังไม่ระบุระดับ '+c.NS+'</span> <span class="muted">กลับไปหน้า Checklist เลือก Major/Minor ก่อนออก CAR</span>':'')+'</div>'+
-   (fs.length?fs.map(function(r){var v=a.results[r.id],car=S.cars['car_'+a.id+'_'+r.id];return '<div class="item" style="grid-template-columns:90px minmax(0,1fr)"><div><span class="pill p-'+v.r+'">'+v.r+'</span>'+(v.r==='NC'?'<div class="small" style="margin-top:4px">'+(v.s==='MA'?'<span class="pill s-MA">Major</span>':v.s==='MI'?'<span class="pill s-MI">Minor</span>':'<span class="pill p-NC">ยังไม่ระบุ</span>')+'</div>':'')+(car?'<div class="small" style="margin-top:4px;font-family:var(--f-mono)">'+esc(car.no)+'</div>':'')+'</div><div><b>'+esc(r.title)+'</b> <span class="small muted">'+r.qs.map(function(q){return SYS[q.s].short+' '+esc(q.c)}).join(' · ')+'</span>'+(v.n?'<div class="note" style="margin-top:4px">'+esc(v.n)+'</div>':'')+'</div></div>'}).join(''):'<div class="empty">ยังไม่พบ NC / OBS</div>')+'</div>'+
-   '<div class="row">'+(ed&&fs.length&&have<fs.length?'<button class="btn pri" id="s-car">ออกใบ CAR จากข้อ NC/OBS ('+(fs.length-have)+' ใบ)</button>':'')+
+   '<div class="card scroll"><table><thead><tr><th>ระบบ</th><th>Pass</th><th>Critical</th><th>Major</th><th>Minor</th><th>Obs</th><th>Comment</th><th>N/A</th><th>ค้าง</th><th>สอดคล้อง</th></tr></thead><tbody>'+per+'</tbody></table>'+
+   '<p class="small muted" style="margin:8px 0 0">สอดคล้อง = Pass ÷ (Pass + Critical + Major + Minor + Obs) ข้อร่วมระหว่างระบบนับให้ทุกระบบที่เลือก</p></div>'+
+   '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">ข้อบกพร่อง ('+fs.length+') · ออก CAR แล้ว '+have+'</h2><div class="small" style="margin-bottom:8px">'+pillRes(c)+'</div>'+
+   (fs.length?fs.map(function(r){var v=a.results[r.id],car=S.cars['car_'+a.id+'_'+r.id];return '<div class="item" style="grid-template-columns:90px minmax(0,1fr)"><div><span class="pill p-'+v.r+'">'+RL[v.r]+'</span>'+(car?'<div class="small" style="margin-top:4px;font-family:var(--f-mono)">'+esc(car.no)+'</div>':'')+'</div><div><b>'+esc(r.title)+'</b> <span class="small muted">'+r.qs.map(function(q){return SYS[q.s].short+' '+esc(q.c)}).join(' · ')+'</span>'+(v.n?'<div class="note" style="margin-top:4px">'+esc(v.n)+'</div>':'')+'</div></div>'}).join(''):'<div class="empty">ยังไม่พบข้อบกพร่อง</div>')+'</div>'+
+   '<div class="row">'+(ed&&fs.length&&have<fs.length?'<button class="btn pri" id="s-car">ออกใบ CAR จากข้อบกพร่อง ('+(fs.length-have)+' ใบ)</button>':'')+
    (have?'<button class="btn" id="s-cars">ดูใบ CAR ('+have+')</button>':'')+'<button class="btn" id="s-rep">รายงาน FM-MR-27</button><button class="btn" id="s-csv">บันทึกไฟล์ CSV (FM-MR-10)</button><button class="btn" id="s-copy">คัดลอกสรุป</button><span class="small muted" id="s-msg"></span></div></div>';
   if($('s-car'))$('s-car').onclick=function(){var n=genCars(a);S.carFilter=a.id;toast('ออกใบ CAR '+n+' ใบ — ไปเติมสาเหตุ/การแก้ไขที่แท็บ CAR');show('cars')};
   if($('s-cars'))$('s-cars').onclick=function(){S.carFilter=a.id;show('cars')};
   $('s-rep').onclick=function(){S.repId=a.id;show('rep')};
   $('s-csv').onclick=function(){dl(csvOf(a),'FM-MR-10_'+a.name+'_'+a.dept+'.csv')};
   $('s-copy').onclick=function(){
-    var txt=a.name+' · '+a.dept+' · '+thDate(a.date)+'\nPASS '+c.PASS+' | OBS '+c.OBS+' | NC '+c.NC+' (Major '+c.MA+', Minor '+c.MI+') | N/A '+c.NA+' | ค้าง '+c.open+'\n'+fs.map(function(r){var v=a.results[r.id];return '['+v.r+(v.r==='NC'?(v.s==='MA'?' Major':v.s==='MI'?' Minor':' ?'):'')+'] '+r.title+(v.n?' – '+v.n:'')}).join('\n');
+    var txt=a.name+' · '+a.dept+' · '+thDate(a.date)+'\nPass '+c.PASS+' | Critical '+c.CR+' | Major '+c.MA+' | Minor '+c.MI+' | Obs '+c.OBS+' | Comment '+c.CM+' | N/A '+c.NA+' | ค้าง '+c.open+'\n'+fs.map(function(r){var v=a.results[r.id];return '['+RL[v.r]+'] '+r.title+(v.n?' – '+v.n:'')}).join('\n');
     var ok=function(){$('s-msg').textContent='คัดลอกแล้ว'};
     try{navigator.clipboard.writeText(txt).then(ok,function(){$('s-msg').textContent='คัดลอกไม่ได้ในมุมมองนี้'})}catch(e){$('s-msg').textContent='คัดลอกไม่ได้ในมุมมองนี้'}};
 }
 
 /* ---------- boot ---------- */
 Array.prototype.forEach.call($('nav').children,function(b){b.onclick=function(){show(b.dataset.t)}});
-var loc=lsGet('kst-hub-audits');if(loc)S.audits=loc;
+var loc=lsGet('kst-hub-audits');if(loc){Object.keys(loc).forEach(function(k){normA(loc[k])});S.audits=loc}
 var lcars=lsGet('kst-hub-cars');if(lcars)S.cars=lcars;
 var lt=lsGet('kst-hub-teams');if(lt&&lt.ver>=3&&lt.teams)S.teams=normTeams(lt.teams);
 computeMe();
@@ -933,7 +932,7 @@ function typing(){var ae=document.activeElement;return ae&&(ae.tagName==='TEXTAR
 function attach(sb,db){
   S.db=db;S.sb=sb;S.mode='db';S.audits={};S.cars={};
   db.collection('audits').onSnapshot(function(snap){
-    var m={};snap.docs.forEach(function(d){m[d.id]=d.data()});S.audits=m;
+    var m={};snap.docs.forEach(function(d){m[d.id]=normA(d.data())});S.audits=m;
     if(S.tab==='home')renderHome();
     else if(S.tab==='sum')renderSum();
     else if(S.tab==='rep'&&!typing())renderRep();
