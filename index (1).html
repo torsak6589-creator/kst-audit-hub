@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KST Audit Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Prompt:wght@500;600&display=swap">
+<style>
+/* Layout: sticky top bar with tabs; single column workspace, checklist rows as ruled audit-sheet lines */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#18232d; --muted:#5d6c78; --line:#d9e0e6;
+  --accent:#0d5c7a; --accent-ink:#ffffff; --accent-soft:#e1eef3;
+  --pass:#1d7a4a; --pass-soft:#e2f3ea; --obs:#9a6400; --obs-soft:#fbf0d9; --nc:#b3261e; --nc-soft:#fbe5e3; --na:#6a7782; --na-soft:#e9edf0;
+  --f-body:'IBM Plex Sans Thai','Sarabun',system-ui,sans-serif; --f-head:'Prompt','IBM Plex Sans Thai',system-ui,sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --surface:#17212a; --ink:#e6edf2; --muted:#93a3b0; --line:#2a3947;
+  --accent:#5db6d6; --accent-ink:#06222d; --accent-soft:#16323e;
+  --pass:#5ccf94; --pass-soft:#123424; --obs:#e8b44f; --obs-soft:#3a2c0e; --nc:#ff8a80; --nc-soft:#3d1a18; --na:#9aa8b3; --na-soft:#222e38; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --surface:#17212a; --ink:#e6edf2; --muted:#93a3b0; --line:#2a3947;
+  --accent:#5db6d6; --accent-ink:#06222d; --accent-soft:#16323e;
+  --pass:#5ccf94; --pass-soft:#123424; --obs:#e8b44f; --obs-soft:#3a2c0e; --nc:#ff8a80; --nc-soft:#3d1a18; --na:#9aa8b3; --na-soft:#222e38; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+h1,h2,h3{font-family:var(--f-head);font-weight:600;margin:0;text-wrap:balance;line-height:1.25}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-block:10px}
+.brand{display:flex;flex-direction:column}
+.brand b{font-family:var(--f-head);font-size:17px}
+.brand span{font-size:12px;color:var(--muted)}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+nav button{border:0;background:none;padding:7px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-weight:500}
+nav button[aria-selected=true]{background:var(--accent-soft);color:var(--accent)}
+nav button:focus-visible,.btn:focus-visible,.res button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-block:20px 60px;display:flex;flex-direction:column;gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.sys{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sys .n{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.sys .big{font-family:var(--f-head);font-size:26px;line-height:1}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:500}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.sm{padding:3px 10px;font-size:13px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:1px 7px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-right:4px;white-space:nowrap}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0;width:100%}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.chk{display:flex;flex-wrap:wrap;gap:8px}
+.chk label{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer;background:var(--bg)}
+.chk input{width:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.scroll{overflow-x:auto}
+.empty{border:1px dashed var(--line);border-radius:8px;padding:24px;text-align:center;color:var(--muted)}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.team{display:flex;flex-direction:column;gap:8px;min-width:0}
+.team h3{font-size:16px}
+.mem{display:flex;gap:6px;align-items:center;justify-content:space-between;font-size:14px;border-top:1px solid var(--line);padding-top:4px}
+.mem select{width:auto;padding:2px 4px;font-size:12px}
+.lead{font-weight:600}
+/* checklist */
+.stick{position:sticky;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:4;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.prog{flex:1 1 160px;height:8px;background:var(--na-soft);border-radius:4px;overflow:hidden;min-width:100px}
+.prog i{display:block;height:100%;background:var(--accent)}
+.cnt{font-family:var(--f-mono);font-size:12px}
+.sec{font-family:var(--f-head);font-size:15px;margin-top:8px;padding-bottom:4px;border-bottom:2px solid var(--ink)}
+.item{display:grid;grid-template-columns:80px minmax(0,1fr);gap:4px 14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.item .cl{font-family:var(--f-mono);font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.item h4{margin:0 0 2px;font-size:15px;font-weight:600}
+.q{margin:2px 0;font-size:14px}
+.q .tag{margin-right:6px}
+.ctl{grid-column:2;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.res{display:flex;gap:4px}
+.res button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 12px;font-weight:500;font-size:13px;cursor:pointer;color:var(--muted)}
+.res button[aria-pressed=true][data-r=PASS]{background:var(--pass-soft);color:var(--pass);border-color:var(--pass)}
+.res button[aria-pressed=true][data-r=OBS]{background:var(--obs-soft);color:var(--obs);border-color:var(--obs)}
+.res button[aria-pressed=true][data-r=NC]{background:var(--nc-soft);color:var(--nc);border-color:var(--nc)}
+.res button[aria-pressed=true][data-r=NA]{background:var(--na-soft);color:var(--na);border-color:var(--na)}
+.item textarea{flex:1 1 240px;min-height:34px;height:34px;resize:vertical}
+.pill{font-size:12px;padding:1px 8px;border-radius:10px;font-weight:500}
+.p-PASS{background:var(--pass-soft);color:var(--pass)}.p-OBS{background:var(--obs-soft);color:var(--obs)}.p-NC{background:var(--nc-soft);color:var(--nc)}.p-NA{background:var(--na-soft);color:var(--na)}
+.note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+[hidden]{display:none!important}
+@media (max-width:560px){.item{grid-template-columns:minmax(0,1fr)}.ctl{grid-column:1}.item .cl{flex-direction:row;flex-wrap:wrap}}
+@media (prefers-reduced-motion:no-preference){.prog i{transition:width .25s}}
+body{margin:0}
+.login{max-width:420px;margin:12vh auto;display:flex;flex-direction:column;gap:12px}
+</style>
+</head><body>
+
+
+<header class="top"><div class="wrap bar">
+  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0</span></div>
+  <nav role="tablist" id="nav">
+    <button role="tab" data-t="home" aria-selected="true">ภาพรวม</button>
+    <button role="tab" data-t="teams" aria-selected="false">ทีมตรวจ</button>
+    <button role="tab" data-t="audit" aria-selected="false">Checklist</button>
+    <button role="tab" data-t="sum" aria-selected="false">สรุปผล</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <section id="v-home"></section>
+  <section id="v-teams" hidden></section>
+  <section id="v-audit" hidden></section>
+  <section id="v-sum" hidden></section>
+</main>
+
+<script>
+/* ตั้งค่าที่นี่ หรือใน config.js: วาง Project URL และ anon public key จาก Supabase > Project Settings > API */
+window.KST_CONFIG={url:'https://YOUR-PROJECT.supabase.co',anonKey:'YOUR-ANON-KEY'};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+'use strict';
+/* ---------- master data ---------- */
+var SYS={
+  q9:{name:'ISO 9001:2015',short:'9001'},
+  e14:{name:'ISO 14001:2015',short:'14001'},
+  f22:{name:'FSSC 22000',short:'FSSC'},
+  bap:{name:'BAP SPS 6.0',short:'BAP'}
+};
+var SKEYS=['q9','e14','f22','bap'];
+var LEADS=['คุณกีต้าร์','คุณณัฐณภัคร์','คุณวิมลพร','คุณรัชชานนท์','คุณภูริภัทร','คุณวลัยกาญจน์','คุณประทุม','คุณต่อศักดิ์'];
+var AUDITORS=['คุณทรงสิทธิ์','คุณธนิดา','คุณอเนกพงษ์','คุณพิมพ์พญา','คุณอุทุมพร','คุณนารีรัตน์','คุณภัทรญา','คุณศดานันท์','คุณภาวินา','คุณอนุเชษฐ์','คุณณิชาวีร์',
+ 'คุณจิราภรณ์','คุณมัสลีนา','คุณกานต์พิชชา','คุณณัฐธิดา','คุณสมฤทัย','คุณจุฑามาศ','คุณวริษา','คุณวนิดา','คุณกมลรัตน์',
+ 'คุณวันจันทร์','คุณหล่อหย๊ะ','คุณบุษรา','คุณพงศกร','คุณสุภานัน','คุณอนิสา','คุณพิพิธ','คุณณัฐซิตา','คุณอัสริยาพร','คุณนฤเบศร์','คุณกาญจนา'];
+var DEPTS=['ฝ่ายผลิต (PD)','QA / QC / R&D','จัดซื้อวัตถุดิบ (PR)','คลัง-สโตร์ (CS-ST)','วิศวกรรม / ซ่อมบำรุง','ระบบทำความเย็น','HR / ความปลอดภัย','สิ่งแวดล้อม / บำบัดน้ำเสีย','IT / MR','ขาย / ส่งออก'];
+var DEFAULT_SCOPE=[['q9'],['q9'],['e14'],['e14'],['f22'],['f22'],['bap'],['bap']];
+
+/* Shared clauses (ISO 9001 / 14001 / 22000 follow the same high-level structure): one row, one result, several questions */
+var HLS=[
+ {c:{q9:'4.1',e14:'4.1',f22:'4.1'},t:'บริบทขององค์กร',
+  q:{q9:'ระบุประเด็นภายใน/ภายนอกที่กระทบทิศทางและผลลัพธ์ของ QMS และติดตามทบทวนข้อมูลเหล่านี้หรือไม่',
+     e14:'ระบุประเด็นภายนอก/ภายใน รวมถึงสภาวะแวดล้อมที่ส่งผลต่อ EMS (น้ำ ขยะ สารเคมี ชุมชน) หรือไม่',
+     f22:'ระบุประเด็นภายนอก/ภายในที่เกี่ยวกับความปลอดภัยอาหาร (ลูกค้า กฎหมาย วัตถุดิบกุ้ง/ทุเรียน) และทบทวนสม่ำเสมอหรือไม่'}},
+ {c:{q9:'4.2',e14:'4.2',f22:'4.2'},t:'ผู้มีส่วนได้เสียและความต้องการ',
+  q:{q9:'ระบุผู้มีส่วนได้เสียที่เกี่ยวข้องและความต้องการ/ความคาดหวังของแต่ละกลุ่มหรือไม่',
+     e14:'ระบุความต้องการและความคาดหวังที่เกี่ยวข้อง และเลือกที่จะเป็นข้อกำหนดผูกพันหรือไม่',
+     f22:'ระบุข้อกำหนดตามกฎหมาย ลูกค้า และผู้มีส่วนได้เสียด้านความปลอดภัยอาหารครบถ้วนหรือไม่'}},
+ {c:{q9:'4.3',e14:'4.3',f22:'4.3'},t:'ขอบเขตของระบบ',
+  q:{q9:'กำหนดและจัดทำขอบเขต QMS เป็นเอกสาร ระบุผลิตภัณฑ์/บริการและข้อยกเว้นหรือไม่',
+     e14:'กำหนดขอบเขต EMS ครอบคลุมกิจกรรม ผลิตภัณฑ์ บริการ และสถานที่หรือไม่',
+     f22:'ขอบเขต FSMS ระบุผลิตภัณฑ์ กระบวนการ และสถานที่ผลิตครบถ้วนและเป็นปัจจุบันหรือไม่'}},
+ {c:{q9:'4.4',e14:'4.4',f22:'4.4'},t:'ระบบและกระบวนการ',
+  q:{q9:'กำหนดกระบวนการ ปัจจัยนำเข้า/ผลลัพธ์ ลำดับและความเชื่อมโยง ผู้รับผิดชอบ และตัวชี้วัดหรือไม่',
+     e14:'จัดทำ นำไปใช้ รักษาไว้ และปรับปรุง EMS รวมถึงกระบวนการที่จำเป็นหรือไม่',
+     f22:'จัดทำ นำไปใช้ รักษาไว้ ปรับปรุงและปรับปรุงข้อมูล FSMS ให้ทันสมัยอยู่เสมอหรือไม่'}},
+ {c:{q9:'5.1',e14:'5.1',f22:'5.1'},t:'ภาวะผู้นำและความมุ่งมั่น',
+  q:{q9:'ผู้บริหารสูงสุดแสดงภาวะผู้นำ ทั้งการมุ่งเน้นลูกค้าและความรับผิดชอบต่อประสิทธิผลของ QMS ตามที่สัมภาษณ์/หลักฐานหรือไม่',
+     e14:'ผู้บริหารสูงสุดแสดงภาวะผู้นำ ให้ทรัพยากร และสื่อสารความสำคัญของ EMS หรือไม่',
+     f22:'ผู้บริหารสูงสุดแสดงความมุ่งมั่นต่อ FSMS รวมถึงวัฒนธรรมความปลอดภัยอาหารและคุณภาพ (Food Safety & Quality Culture) หรือไม่'}},
+ {c:{q9:'5.2',e14:'5.2',f22:'5.2'},t:'นโยบาย',
+  q:{q9:'นโยบายคุณภาพเหมาะสมกับบริบท มีเป็นเอกสาร สื่อสารถึงพนักงาน และพนักงานสุ่มสัมภาษณ์อธิบายได้หรือไม่',
+     e14:'นโยบายสิ่งแวดล้อมมีความมุ่งมั่นป้องกันมลพิษ ปฏิบัติตามข้อบังคับ ปรับปรุงต่อเนื่อง และสื่อสารถึงพนักงาน/ผู้เกี่ยวข้องหรือไม่',
+     f22:'นโยบายความปลอดภัยอาหารมีเป็นเอกสาร ลงนามผู้บริหารสูงสุด สื่อสาร และพนักงานอธิบายได้หรือไม่'}},
+ {c:{q9:'5.3',e14:'5.3',f22:'5.3'},t:'บทบาท ความรับผิดชอบ และอำนาจหน้าที่',
+  q:{q9:'มีผังองค์กร/Job Description และแต่งตั้งผู้รับผิดชอบ QMS (QMR) เป็นลายลักษณ์อักษรหรือไม่',
+     e14:'แต่งตั้ง EMR และมอบหมายบทบาทด้านสิ่งแวดล้อมใน Job Description ชัดเจนหรือไม่',
+     f22:'แต่งตั้งหัวหน้าทีม Food Safety Team และผู้รายงานปัญหา FSMS ต่อผู้บริหารพร้อมอำนาจหน้าที่ชัดเจนหรือไม่'}},
+ {c:{q9:'6.1',e14:'6.1.1',f22:'6.1'},t:'ความเสี่ยงและโอกาส',
+  q:{q9:'ระบุความเสี่ยงและโอกาสจากบริบท/ผู้มีส่วนได้เสีย วางแผนดำเนินการ และประเมินประสิทธิผลหรือไม่',
+     e14:'ระบุความเสี่ยงและโอกาสที่เกี่ยวกับลักษณะปัญหาสิ่งแวดล้อม ข้อบังคับ และบริบท พร้อมแผนดำเนินการหรือไม่',
+     f22:'ระบุความเสี่ยงและโอกาสที่ต้องดำเนินการต่อ FSMS แยกจากการวิเคราะห์อันตรายหรือไม่'}},
+ {c:{q9:'6.2',e14:'6.2',f22:'6.2'},t:'วัตถุประสงค์และแผนบรรลุผล',
+  q:{q9:'วัตถุประสงค์คุณภาพวัดผลได้ สอดคล้องนโยบาย มีผู้รับผิดชอบ ระยะเวลา และติดตามผลหรือไม่',
+     e14:'วัตถุประสงค์สิ่งแวดล้อมวัดผลได้ มีแผนการ ทรัพยากร ผู้รับผิดชอบ กำหนดเสร็จ และตัวชี้วัดหรือไม่',
+     f22:'วัตถุประสงค์ FSMS วัดผลได้ สอดคล้องนโยบาย และมีแผนบรรลุผลพร้อมติดตามหรือไม่'}},
+ {c:{q9:'7.1',e14:'7.1',f22:'7.1'},t:'ทรัพยากร',
+  q:{q9:'จัดหาทรัพยากรเพียงพอ ทั้งบุคลากร โครงสร้างพื้นฐาน สภาพแวดล้อมการทำงาน และทรัพยากรเฝ้าติดตาม/วัด (สอบเทียบ) หรือไม่',
+     e14:'จัดหาทรัพยากรที่จำเป็นต่อการนำไปใช้และปรับปรุง EMS อย่างต่อเนื่องหรือไม่',
+     f22:'จัดหาบุคลากร โครงสร้างพื้นฐาน สภาพแวดล้อม และเครื่องมือสอบเทียบเพียงพอ รวมถึงบริการภายนอกที่ควบคุมแล้วหรือไม่'}},
+ {c:{q9:'7.2',e14:'7.2',f22:'7.2'},t:'ความสามารถ',
+  q:{q9:'กำหนดความสามารถที่จำเป็น ฝึกอบรม ประเมินประสิทธิผล และเก็บบันทึกหลักฐานหรือไม่',
+     e14:'กำหนดความสามารถด้านสิ่งแวดล้อมและกฎหมาย ฝึกอบรม และมีหลักฐานประเมินประสิทธิผลหรือไม่',
+     f22:'พนักงานที่มีผลต่อความปลอดภัยอาหารมีความสามารถ ผ่านการอบรม และประเมินประสิทธิผลการอบรมหรือไม่'}},
+ {c:{q9:'7.3',e14:'7.3',f22:'7.3'},t:'ความตระหนัก',
+  q:{q9:'พนักงานรู้นโยบาย วัตถุประสงค์ที่เกี่ยวข้อง และผลของการไม่ปฏิบัติตามข้อกำหนดหรือไม่ (สุ่มสัมภาษณ์)',
+     e14:'พนักงานรู้ลักษณะปัญหาสิ่งแวดล้อมที่สำคัญของงานตน และผลของการไม่ปฏิบัติตามข้อบังคับหรือไม่ (สุ่มสัมภาษณ์)',
+     f22:'พนักงานรู้นโยบาย วัตถุประสงค์ความปลอดภัยอาหาร และหน้าที่ของตนต่อ CCP/OPRP/PRP หรือไม่ (สุ่มสัมภาษณ์)'}},
+ {c:{q9:'7.4',e14:'7.4',f22:'7.4'},t:'การสื่อสาร',
+  q:{q9:'กำหนดว่าจะสื่อสารอะไร เมื่อใด กับใคร อย่างไร ทั้งภายในและภายนอกหรือไม่',
+     e14:'มีกระบวนการสื่อสารภายใน/ภายนอกด้าน EMS และตอบสนองต่อข้อร้องเรียน/ข้อซักถามหรือไม่',
+     f22:'การสื่อสารกับ Supplier ลูกค้า หน่วยงานกำกับ และภายในครอบคลุมข้อมูลความปลอดภัยอาหารหรือไม่'}},
+ {c:{q9:'7.5',e14:'7.5',f22:'7.5'},t:'ข้อมูลเอกสาร',
+  q:{q9:'เอกสารและบันทึกมีการชี้บ่ง อนุมัติ ควบคุมฉบับ เก็บรักษา และเรียกใช้ได้ที่จุดใช้งานหรือไม่',
+     e14:'ข้อมูลเอกสารได้รับการควบคุมเรื่องการแจกจ่าย การเข้าถึง การเปลี่ยนแปลง และการจัดเก็บหรือไม่',
+     f22:'เอกสารและบันทึก FSMS ได้รับการควบคุม อ่านง่าย ระบุตัวตนได้ และเก็บตามระยะเวลาที่กำหนดหรือไม่'}},
+ {c:{q9:'9.1',e14:'9.1.1',f22:'9.1'},t:'เฝ้าติดตาม วัด วิเคราะห์ และประเมินผล',
+  q:{q9:'กำหนดสิ่งที่ต้องติดตาม วิธีการ ความถี่ และวิเคราะห์ผลรวมถึงความพึงพอใจลูกค้าหรือไม่',
+     e14:'ติดตามและวัดประสิทธิภาพด้านสิ่งแวดล้อม (น้ำเสีย พลังงาน ขยะ) ตามความถี่ที่กำหนด ด้วยเครื่องมือที่สอบเทียบแล้วหรือไม่',
+     f22:'ติดตามผล CCP/OPRP/PRP วิเคราะห์ข้อมูลผลการตรวจสอบ และประเมินประสิทธิผล FSMS หรือไม่'}},
+ {c:{q9:'9.2',e14:'9.2',f22:'9.2'},t:'การตรวจติดตามภายใน',
+  q:{q9:'มีแผนและโปรแกรมตรวจติดตามภายในรายปี ผู้ตรวจเป็นกลาง ไม่ตรวจงานตนเอง มีรายงานและติดตามแก้ไขหรือไม่',
+     e14:'ตรวจติดตามภายในครอบคลุมทุกข้อกำหนดและหน่วยงานตามโปรแกรม ผลถูกรายงานต่อฝ่ายบริหารหรือไม่',
+     f22:'ตรวจภายในตามแผน ผู้ตรวจมีความสามารถและเป็นกลาง และปิด NC ภายในเวลาที่กำหนดหรือไม่'}},
+ {c:{q9:'9.3',e14:'9.3',f22:'9.3'},t:'การทบทวนโดยฝ่ายบริหาร',
+  q:{q9:'ผู้บริหารสูงสุดทบทวน QMS ตามกำหนด ครบทุกหัวข้อ และมีมติ/ข้อสั่งการที่ติดตามได้หรือไม่',
+     e14:'การทบทวนโดยฝ่ายบริหารครอบคลุมข้อมูลเข้าและมีผลสรุปเรื่องความเหมาะสม เพียงพอ ประสิทธิผลของ EMS หรือไม่',
+     f22:'การทบทวนโดยฝ่ายบริหารอย่างน้อยปีละครั้ง ครอบคลุมข้อมูลเข้า (เหตุเรียกคืน ผลตรวจ ข้อร้องเรียน) และมีมติหรือไม่'}},
+ {c:{q9:'10.2',e14:'10.2',f22:'10.1'},t:'ความไม่สอดคล้องและการแก้ไข',
+  q:{q9:'เมื่อพบความไม่สอดคล้อง มีการแก้ไขทันที วิเคราะห์สาเหตุ ดำเนินการแก้ไข และทบทวนประสิทธิผล พร้อมเก็บหลักฐานหรือไม่',
+     e14:'จัดการความไม่สอดคล้อง ควบคุมผลกระทบต่อสิ่งแวดล้อม วิเคราะห์สาเหตุ และป้องกันการเกิดซ้ำหรือไม่',
+     f22:'ความไม่สอดคล้อง/การแก้ไข (CAPA) ปิดทัน วิเคราะห์สาเหตุราก และทบทวนประสิทธิผลหรือไม่'}},
+ {c:{q9:'10.3',e14:'10.3',f22:'10.3'},t:'การปรับปรุงอย่างต่อเนื่อง',
+  q:{q9:'มีหลักฐานการปรับปรุงความเหมาะสม เพียงพอ และประสิทธิผลของ QMS ต่อเนื่องหรือไม่',
+     e14:'มีหลักฐานการปรับปรุง EMS และประสิทธิภาพด้านสิ่งแวดล้อมอย่างต่อเนื่องหรือไม่',
+     f22:'มีการปรับปรุงและอัปเดต FSMS ต่อเนื่อง จากผลวิเคราะห์ ตรวจสอบ และทบทวนฝ่ายบริหารหรือไม่'}}
+];
+
+/* System-specific items: [system, group, clause, title, question] */
+var SPEC=[
+ ['q9','ISO 9001 · การปฏิบัติการ','8.2','ข้อกำหนดผลิตภัณฑ์และการสื่อสารกับลูกค้า','ทบทวนข้อกำหนดผลิตภัณฑ์/คำสั่งซื้อก่อนยอมรับ สื่อสารกับลูกค้า จัดการข้อร้องเรียน และเก็บบันทึกหรือไม่'],
+ ['q9','ISO 9001 · การปฏิบัติการ','8.3','การออกแบบและพัฒนา','มีการวางแผน ข้อมูลเข้า การทวนสอบ/รับรอง และควบคุมการเปลี่ยนแปลงของงาน R&D/ผลิตภัณฑ์ใหม่หรือไม่ (N/A หากไม่เกี่ยวข้อง)'],
+ ['q9','ISO 9001 · การปฏิบัติการ','8.4','การควบคุมผู้ให้บริการภายนอก','มีเกณฑ์คัดเลือก ประเมิน และเฝ้าติดตามผู้ส่งมอบ/ฟาร์ม/ผู้รับจ้างภายนอก และเก็บ Approved Supplier List หรือไม่'],
+ ['q9','ISO 9001 · การปฏิบัติการ','8.5','การผลิตและการให้บริการ','ควบคุมการผลิตตามเกณฑ์ ชี้บ่งและสอบกลับได้ ดูแลทรัพย์สินลูกค้า รักษาสภาพผลิตภัณฑ์ และควบคุมการเปลี่ยนแปลงหรือไม่'],
+ ['q9','ISO 9001 · การปฏิบัติการ','8.6','การปล่อยผลิตภัณฑ์','ตรวจสอบตามเกณฑ์ก่อนปล่อยผลิตภัณฑ์ และบันทึกผู้อนุมัติปล่อยหรือไม่'],
+ ['q9','ISO 9001 · การปฏิบัติการ','8.7','การควบคุมผลลัพธ์ที่ไม่เป็นไปตามข้อกำหนด','ชี้บ่ง แยก และจัดการผลิตภัณฑ์ไม่เป็นไปตามข้อกำหนด (Hold/Rework/Reject) พร้อมบันทึกหรือไม่'],
+ ['q9','ISO 9001 · การประเมินผล','9.1.2','ความพึงพอใจของลูกค้า','ติดตามความพึงพอใจ/ความคิดเห็นของลูกค้าและนำผลไปใช้ปรับปรุงหรือไม่'],
+ ['e14','ISO 14001 · การวางแผน','6.1.2','ลักษณะปัญหาสิ่งแวดล้อมและผลกระทบ','ระบุลักษณะปัญหาสิ่งแวดล้อมและผลกระทบ (น้ำเสีย ขยะ สารเคมี แอมโมเนีย พลังงาน) ประเมินนัยสำคัญตามเกณฑ์ และสื่อสารหรือไม่'],
+ ['e14','ISO 14001 · การวางแผน','6.1.3','ข้อบังคับทางกฎหมายและอื่นๆ','มีทะเบียนกฎหมาย/ข้อบังคับที่เป็นปัจจุบัน และกำหนดวิธีนำไปใช้กับองค์กรหรือไม่'],
+ ['e14','ISO 14001 · การวางแผน','6.1.4','การวางแผนการดำเนินการ','วางแผนจัดการลักษณะปัญหาที่สำคัญ ข้อบังคับ และความเสี่ยง/โอกาส และบูรณาการเข้ากระบวนการหรือไม่'],
+ ['e14','ISO 14001 · การปฏิบัติการ','8.1','การวางแผนและควบคุมการปฏิบัติงาน','ควบคุมการปฏิบัติงานตามเกณฑ์ รวมถึงของเสีย น้ำเสีย สารเคมี ถังขยะแยกประเภท มุมมองวงจรชีวิต และผู้รับเหมาภายนอกหรือไม่'],
+ ['e14','ISO 14001 · การปฏิบัติการ','8.2','การเตรียมพร้อมและตอบสนองเหตุฉุกเฉิน','มีแผนรับมือ (แอมโมเนียรั่ว น้ำมัน/สารเคมีหก ไฟไหม้) ซ้อมตามกำหนด และทบทวนหลังซ้อม/เหตุจริงหรือไม่'],
+ ['e14','ISO 14001 · การประเมินผล','9.1.2','การประเมินความสอดคล้องตามข้อบังคับ','ประเมินความสอดคล้องกฎหมายตามความถี่ที่กำหนด (ค่าน้ำทิ้ง ใบอนุญาต) และเก็บหลักฐานสถานะหรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','7.1.6','การควบคุมกระบวนการ/ผลิตภัณฑ์/บริการจากภายนอก','ประเมินและอนุมัติ Supplier (ฟาร์ม ทุเรียน บรรจุภัณฑ์ Lab ภายนอก) และตรวจรับวัตถุดิบตาม Specification หรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','8.2','โปรแกรมสุขลักษณะพื้นฐาน (PRPs)','จัดทำ PRP ครอบคลุมตามความเสี่ยง และทวนสอบการนำไปใช้เป็นประจำหรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','8.3','ระบบสอบกลับ','ทดสอบการสอบกลับ (Mock Recall) จากวัตถุดิบถึงลูกค้า ครบมวลสมดุลและเวลาที่กำหนดหรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','8.4','การเตรียมพร้อมและตอบสนองเหตุฉุกเฉิน/เรียกคืน','มีขั้นตอนเรียกคืน/ถอนสินค้า รายชื่อผู้ติดต่อ และทดสอบอย่างน้อยปีละครั้งหรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','8.5','การวิเคราะห์อันตราย','Food Safety Team วิเคราะห์อันตราย (ชีวภาพ เคมี กายภาพ สารก่อภูมิแพ้) ใช้ผังกระบวนการที่ตรวจยืนยันหน้างานแล้วหรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','8.5.4','แผนควบคุมอันตราย (HACCP/OPRP)','กำหนด CCP/OPRP มี Critical Limit วิธีติดตาม และการแก้ไขเมื่อเบี่ยงเบนครบถ้วนหรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','8.7','การควบคุมเครื่องมือเฝ้าติดตามและวัด','เครื่องมือวัดที่ใช้กับ CCP/OPRP ได้รับการสอบเทียบ/ทวนสอบและบันทึกผลหรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','8.8','การทวนสอบที่เกี่ยวกับ PRPs และแผนควบคุมอันตราย','มีแผนและบันทึกการทวนสอบ ผลวิเคราะห์ในห้องปฏิบัติการ และวิเคราะห์ผลการทวนสอบหรือไม่'],
+ ['f22','FSSC · ISO 22000 การปฏิบัติการ','8.9','การควบคุมความไม่สอดคล้องของผลิตภัณฑ์/กระบวนการ','จัดการผลิตภัณฑ์ที่อาจไม่ปลอดภัย (Hold, ประเมิน, ปล่อย/ทำลาย) และการแก้ไข CCP/OPRP เบี่ยงเบนหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','4','การก่อสร้างและผังอาคาร','อาคาร พื้น ผนัง เพดาน ประตู การแบ่งเขต (Zoning) และการป้องกันสัตว์รบกวนเหมาะสมหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','5','ผังสถานที่และพื้นที่ทำงาน','ผังการไหลของคน วัตถุดิบ ของเสีย และพื้นที่เสี่ยงสูง/ต่ำ ป้องกันการปนเปื้อนข้ามหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','6','สาธารณูปโภค (น้ำ อากาศ พลังงาน)','คุณภาพน้ำ น้ำแข็ง ไอน้ำ ระบายอากาศ อากาศอัด และแสงสว่าง ได้รับการเฝ้าระวังและทวนสอบหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','7','การกำจัดของเสีย','จัดการของเสียและน้ำทิ้งไม่ให้เกิดการปนเปื้อน แยกประเภท และกำจัดโดยผู้รับจ้างที่ได้รับอนุญาตหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','8','ความเหมาะสมของเครื่องจักร การทำความสะอาด และการบำรุงรักษา','เครื่องจักรสุขลักษณะดี มี PM แผนบำรุงรักษา และควบคุมสารหล่อลื่นเกรดอาหารหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','9','การจัดการวัสดุที่จัดซื้อ','ตรวจรับวัตถุดิบ บรรจุภัณฑ์ และสารเคมีตาม Specification และมีบันทึกสอดคล้องกับข้อกำหนดหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','10','การป้องกันการปนเปื้อนข้าม','ควบคุมการปนเปื้อนข้ามจากจุลินทรีย์ สารก่อภูมิแพ้ และวัตถุแปลกปลอม (MD/X-ray, แก้ว, พลาสติกแข็ง) หรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','11','การทำความสะอาดและฆ่าเชื้อ','โปรแกรมทำความสะอาด (SSOP) ครอบคลุม และมีการทวนสอบประสิทธิผล (ATP/Swab) หรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','12','การควบคุมสัตว์รบกวน','มีโปรแกรม แผนผังตำแหน่งกับดัก แนวโน้ม และดำเนินการแก้ไขเมื่อพบหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','13','สุขลักษณะส่วนบุคคลและสิ่งอำนวยความสะดวก','พนักงานล้างมือ ชุดปฏิบัติงาน เครื่องประดับ ห้องน้ำ/ห้องแต่งตัว และการเข้าพื้นที่ของผู้เยี่ยมชมถูกควบคุมหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','14','การนำกลับมาแปรรูปใหม่ (Rework)','ชี้บ่ง ควบคุม และสอบกลับ Rework อย่างมีขั้นตอนหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','15','ขั้นตอนเรียกคืนผลิตภัณฑ์','ระบบเรียกคืนมีเอกสาร ผู้รับผิดชอบ และทดสอบสอบกลับตามความถี่ที่กำหนดหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','16','การจัดเก็บ','คลังเย็น/แห้ง ควบคุมอุณหภูมิ FIFO/FEFO การป้องกันสัตว์รบกวน และการแยกสารเคมีเหมาะสมหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','17','ข้อมูลผลิตภัณฑ์และการสร้างความตระหนักผู้บริโภค','ฉลาก ข้อมูลสารก่อภูมิแพ้ ชุดและวันหมดอายุถูกต้องตามกฎหมายและข้อกำหนดลูกค้าหรือไม่'],
+ ['f22','FSSC · PRPs (ISO/TS 22002-1)','18','การป้องกันอาหารจากการจงใจปนเปื้อน','ระบบ Food Defence ควบคุมการเข้าถึงพื้นที่ละเอียดอ่อนและตรวจสอบพนักงาน/ผู้เยี่ยมชมหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.1','Food Safety & Quality Culture','มีวัตถุประสงค์ แผนสื่อสาร การฝึกอบรม และตัวชี้วัดวัฒนธรรมความปลอดภัยอาหาร/คุณภาพ และทบทวนผลหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.1','การจัดการบริการและวัสดุที่จัดซื้อ','Lab ที่ใช้มีความสามารถ มีขั้นตอนจัดซื้อฉุกเฉิน นโยบายสารต้องห้ามสำหรับสัตว์น้ำ และทบทวน Specification RM/FG หรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.2','ฉลากและวัสดุพิมพ์','ตรวจสอบฉลากถูกต้องตามกฎหมายประเทศปลายทาง และมีหลักฐานสนับสนุนข้อกล่าวอ้าง (Claim) หรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.3','การป้องกันอาหารจากการประสงค์ร้าย (Food Defense)','ประเมินภัยคุกคาม มีแผนและมาตรการควบคุม ทบทวนทุกปีหรือเมื่อมีการเปลี่ยนแปลงหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.4','การลดความเสี่ยงการทุจริตอาหาร (Food Fraud)','ประเมินช่องโหว่ (Vulnerability) ของวัตถุดิบ (เช่น กุ้ง/ทุเรียน) และมีแผนบรรเทาหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.6','การจัดการสารก่อภูมิแพ้','ชี้บ่งสารก่อภูมิแพ้ (กุ้ง/สัตว์น้ำเปลือกแข็ง) จัดการปนเปื้อนข้าม ทวนสอบการทำความสะอาด และฉลากหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.7','การเฝ้าระวังสิ่งแวดล้อม (EMP)','มี EMP ตามความเสี่ยง จุดเก็บตัวอย่าง ความถี่ เกณฑ์ และดำเนินการเมื่อพบเชื้อเกินเกณฑ์หรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.9','การควบคุมคุณภาพ','กำหนดพารามิเตอร์คุณภาพ ควบคุมปริมาณ (น้ำหนัก/Net weight) และตรวจสอบผลิตภัณฑ์ก่อนส่งมอบหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.11','การควบคุมอันตรายและการป้องกันการปนเปื้อนข้าม','มีมาตรการควบคุมอันตรายและป้องกันการปนเปื้อนข้าม ตรวจสอบประสิทธิผลเป็นระยะหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.12','การทวนสอบ PRPs','ตรวจ PRP ระดับหน้างาน (Inspection) ตามความถี่ที่กำหนด ผลได้รับการวิเคราะห์และแก้ไขหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.14','สถานะสุขภาพของพนักงาน','ควบคุมสุขภาพพนักงาน (รายงานอาการ ตรวจสุขภาพ จัดการผู้ป่วย) เพื่อป้องกันการปนเปื้อนหรือไม่'],
+ ['f22','FSSC · ข้อกำหนดเพิ่มเติม (Additional Requirements)','2.5.15','การจัดการอุปกรณ์/เครื่องจักร','มีข้อกำหนดการจัดซื้อ ติดตั้ง ทดสอบ และบริหารการเปลี่ยนแปลงเครื่องจักรโดยประเมินความเสี่ยงหรือไม่'],
+ ['bap','BAP · Core (C)','1.1','ใบอนุญาตประกอบการ (License to Operate)','โรงงานมีใบอนุญาต/สิทธิ์แปรรูป ณ สถานที่ที่ยื่นขอการรับรอง ครบถ้วนและยังไม่หมดอายุหรือไม่'],
+ ['bap','BAP · Core (C)','1.1.1.1','การใช้ที่ดินและน้ำถูกกฎหมาย','สุ่มตรวจ Factory Layout โฉนดที่ดิน ใบอนุญาตกิจการที่เป็นอันตรายต่อสุขภาพ และสำเนาใบรับรองระบบคุณภาพหรือไม่'],
+ ['bap','BAP · Core (C)','C-Reg','ใบอนุญาตและกฎหมายอื่น','ใบอนุญาตธุรกิจ สิ่งแวดล้อม แรงงาน และความปลอดภัยอื่นๆ ครบ ถูกต้อง ต่ออายุทันหรือไม่'],
+ ['bap','BAP · Core (C)','C-Trace','การสอบกลับและแหล่งที่มาวัตถุดิบ','สอบกลับจากผลิตภัณฑ์ถึงฟาร์ม/บ่อและล็อตที่ผลิตได้ครบ และตรวจสอบสถานะฟาร์ม BAP/ASC หรือไม่'],
+ ['bap','BAP · Core (C)','C-FS','ความปลอดภัยอาหารและสุขลักษณะ','ควบคุมสารต้องห้าม ยาปฏิชีวนะ สารเคมี สุขลักษณะ และ HACCP ครอบคลุมตามข้อกำหนดหรือไม่'],
+ ['bap','BAP · 2A ความรับผิดชอบต่อสังคม','2A-1','แรงงานบังคับ แรงงานเด็ก และการเลือกปฏิบัติ','ไม่พบแรงงานบังคับ/เด็ก มีหลักฐานอายุ สัญญา การจ่ายค่าจ้างตรงเวลา และนโยบายไม่เลือกปฏิบัติหรือไม่'],
+ ['bap','BAP · 2A ความรับผิดชอบต่อสังคม','2A-2','ค่าจ้าง ชั่วโมงทำงาน และอาชีวอนามัย','ค่าจ้างไม่ต่ำกว่าอัตรากฎหมาย ชั่วโมง/OT เป็นไปตามกฎหมาย และ PPE ความปลอดภัยเพียงพอหรือไม่'],
+ ['bap','BAP · 2B Enhanced','2B-1','ข้อกำหนดเสริม 2B','ปฏิบัติตามข้อกำหนดระดับ Enhanced (ระบบจัดการ การร้องทุกข์ สิทธิพนักงาน) ครบตามคู่มือ BAP หรือไม่'],
+ ['bap','BAP · RTE','RTE-1','ผลิตภัณฑ์พร้อมบริโภค (RTE)','ควบคุมการปนเปื้อนหลังปรุง EMP ควบคุม Listeria/เชื้อก่อโรค และทวนสอบสุขลักษณะพื้นที่ RTE หรือไม่'],
+ ['bap','BAP · Animal Welfare','AW-1','การขนส่งสัตว์มีชีวิต','ขนส่งสัตว์ที่ยังมีชีวิตอย่างเหมาะสม มี Transport Log ครบ ลงนามผู้ส่ง/ผู้รับ และฝ่ายบริหารทวนสอบอย่างน้อยทุกสัปดาห์หรือไม่'],
+ ['bap','BAP · Animal Welfare','AW-2','การพักสัตว์และการทำให้สลบ/ฆ่า','มี SOP การพักสัตว์ ทำให้สลบ และฆ่า ประเมินประสิทธิผลการทำให้สลบ และจัดการเมื่อ SOP ไม่ถูกปฏิบัติหรือไม่'],
+ ['bap','BAP · Animal Welfare','AW-3','ผู้รับจ้างภายนอกและการอบรมพนักงาน','ผู้รับจ้างทำให้สลบ/ฆ่าอยู่ภายใต้ข้อกำหนดเดียวกัน และพนักงานที่เกี่ยวข้องได้รับการอบรม/ประเมินความสามารถหรือไม่'],
+ ['bap','BAP · 5A น้ำทิ้ง','5A-1','การควบคุมและเฝ้าระวังน้ำทิ้ง','เฝ้าระวังคุณภาพน้ำทิ้งตามพารามิเตอร์ ความถี่ และเกณฑ์ใบอนุญาต/BAP มีผลวิเคราะห์ย้อนหลัง และแก้ไขเมื่อเกินเกณฑ์หรือไม่'],
+ ['bap','BAP · 5A น้ำทิ้ง','5A-2','ระบบบำบัดและตะกอน','ระบบบำบัดทำงานตามแบบ มีบันทึกการเดินระบบ การจัดการตะกอน และแผนรองรับเหตุผิดปกติหรือไม่']
+];
+
+/* ---------- state ---------- */
+var S={tab:'home',audits:{},teams:null,cur:null,filter:'all',db:null,mode:'local',ready:false};
+var timers={};
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function uid(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+/* ---------- teams ---------- */
+function defaultTeams(){
+  var t=LEADS.map(function(l,i){return{lead:l,members:[],systems:DEFAULT_SCOPE[i].slice()}});
+  AUDITORS.forEach(function(a,i){t[i%t.length].members.push(a)});
+  return t;
+}
+function getTeams(){return S.teams||defaultTeams()}
+function saveTeams(){
+  S.teams=getTeams();
+  if(S.db){S.db.doc('config/teams').set({teams:S.teams,updated:Date.now()}).catch(function(){})}
+  else lsSet('kst-hub-teams',S.teams);
+}
+
+/* ---------- audit sessions ---------- */
+function saveAudit(a,now){
+  a.updated=Date.now();
+  var run=function(){
+    delete timers[a.id];
+    if(S.db){S.db.doc('audits/'+a.id).set(a).catch(function(){})}
+    else{var all=lsGet('kst-hub-audits')||{};all[a.id]=a;lsSet('kst-hub-audits',all)}
+  };
+  clearTimeout(timers[a.id]);
+  if(now)run();else timers[a.id]=setTimeout(run,600);
+}
+function removeAudit(id){
+  delete S.audits[id];
+  if(S.db)S.db.doc('audits/'+id).delete().catch(function(){});
+  else{var all=lsGet('kst-hub-audits')||{};delete all[id];lsSet('kst-hub-audits',all)}
+}
+
+/* build the checklist rows for a session from its selected systems */
+function rowsFor(systems){
+  var rows=[],hs=systems.filter(function(s){return s!=='bap'&&SYS[s]&&(s==='q9'||s==='e14'||s==='f22')});
+  if(hs.length){
+    HLS.forEach(function(h){
+      var qs=hs.map(function(s){return{s:s,c:h.c[s],q:h.q[s]}}).filter(function(x){return x.q});
+      if(qs.length)rows.push({id:'H_'+h.c.q9.replace(/\./g,'_'),group:'ข้อกำหนดร่วม ISO (โครงสร้าง HLS) · '+hs.map(function(s){return SYS[s].short}).join(' + '),title:h.t,qs:qs});
+    });
+  }
+  SPEC.forEach(function(r){
+    if(systems.indexOf(r[0])<0)return;
+    rows.push({id:r[0]+'_'+r[2].replace(/\./g,'_'),group:r[1],title:r[3],qs:[{s:r[0],c:r[2],q:r[4]}]});
+  });
+  return rows;
+}
+function stats(a){
+  var rows=rowsFor(a.systems||[]),c={PASS:0,OBS:0,NC:0,NA:0,open:0};
+  rows.forEach(function(r){var v=(a.results||{})[r.id];if(v&&v.r)c[v.r]++;else c.open++});
+  c.total=rows.length;c.done=c.total-c.open;
+  var ap=c.PASS+c.OBS+c.NC;c.pct=ap?Math.round(c.PASS/ap*100):null;
+  return c;
+}
+function thDate(d){try{var p=d.split('-');return p[2]+'/'+p[1]+'/'+(+p[0]+543)}catch(e){return d||''}}
+
+/* ---------- views ---------- */
+function show(t){
+  S.tab=t;
+  ['home','teams','audit','sum'].forEach(function(k){$('v-'+k).hidden=(k!==t)});
+  Array.prototype.forEach.call($('nav').children,function(b){b.setAttribute('aria-selected',b.dataset.t===t)});
+  if(t==='home')renderHome();if(t==='teams')renderTeams();if(t==='audit')renderAudit();if(t==='sum')renderSum();
+  try{window.scrollTo(0,0)}catch(e){}
+}
+
+function renderHome(){
+  var list=Object.keys(S.audits).map(function(k){return S.audits[k]}).sort(function(a,b){return (b.updated||0)-(a.updated||0)});
+  var teams=getTeams();
+  var perSys=SKEYS.map(function(s){
+    var n=0,nc=0,obs=0;
+    list.forEach(function(a){if((a.systems||[]).indexOf(s)<0)return;n++;
+      rowsFor(a.systems).forEach(function(r){var v=(a.results||{})[r.id];if(!v||!v.r)return;
+        if(r.qs.some(function(q){return q.s===s})){if(v.r==='NC')nc++;if(v.r==='OBS')obs++}})});
+    return '<div class="card sys"><span class="n">'+esc(SYS[s].name)+'</span><span class="big">'+n+' <span class="small muted" style="font-family:var(--f-body)">การตรวจ</span></span><span class="small"><span class="pill p-NC">NC '+nc+'</span> <span class="pill p-OBS">OBS '+obs+'</span></span></div>'}).join('');
+  var teamOpts=teams.map(function(t,i){return '<option value="'+i+'">ทีม '+(i+1)+' · หัวหน้า '+esc(t.lead)+'</option>'}).join('');
+  var n=list.length+1;
+  var today=new Date().toISOString().slice(0,10);
+  $('v-home').innerHTML=
+   '<div style="display:flex;flex-direction:column;gap:20px">'+
+   '<div><h1 style="font-size:24px">ศูนย์กลาง Internal Audit ทั้งองค์กร</h1><p class="muted" style="margin:6px 0 0;max-width:68ch">เลือกระบบที่จะตรวจ แล้ว checklist ปรับตามอัตโนมัติ ข้อกำหนดที่ซ้ำกันระหว่าง ISO 9001, 14001 และ FSSC 22000 รวมเป็นแถวเดียว ตอบครั้งเดียวใช้ได้ทุกระบบ</p></div>'+
+   '<div class="grid4">'+perSys+'</div>'+
+   '<div class="card"><h2 style="font-size:17px;margin-bottom:12px">เปิดการตรวจใหม่</h2><div class="form">'+
+    '<label class="f">ชื่อการตรวจ<input id="n-name" value="IQA '+n+'/2569"></label>'+
+    '<label class="f">หน่วยงานที่ถูกตรวจ<input id="n-dept" list="deptlist" placeholder="เช่น ฝ่ายผลิต (PD)"><datalist id="deptlist">'+DEPTS.map(function(d){return '<option value="'+esc(d)+'">'}).join('')+'</datalist></label>'+
+    '<label class="f">วันที่ตรวจ<input id="n-date" type="date" value="'+today+'"></label>'+
+    '<label class="f">ทีมตรวจ<select id="n-team">'+teamOpts+'</select></label></div>'+
+    '<div style="margin-top:12px" class="f"><span class="small muted">ระบบที่ตรวจ</span><div class="chk" id="n-sys" style="margin-top:6px">'+
+     SKEYS.map(function(s){return '<label><input type="checkbox" value="'+s+'"> '+esc(SYS[s].name)+'</label>'}).join('')+'</div></div>'+
+    '<p class="note" style="margin:12px 0">ผู้ตรวจต้องไม่ตรวจงานของตนเอง (ISO 9.2) เลือกทีมที่ไม่ได้สังกัดหน่วยงานที่ถูกตรวจ</p>'+
+    '<button class="btn pri" id="n-go">เริ่มตรวจ</button> <span class="small muted" id="n-err"></span></div>'+
+   '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">การตรวจทั้งหมด</h2>'+
+    (list.length?'<div class="scroll"><table><thead><tr><th>ชื่อ</th><th>หน่วยงาน</th><th>วันที่</th><th>ระบบ</th><th>ความคืบหน้า</th><th>NC</th><th></th></tr></thead><tbody>'+
+     list.map(function(a){var c=stats(a);return '<tr><td><b>'+esc(a.name)+'</b><div class="small muted">ทีม '+((a.team||0)+1)+' · '+esc((teams[a.team||0]||{}).lead||'')+'</div></td><td>'+esc(a.dept)+'</td><td>'+esc(thDate(a.date))+'</td><td>'+(a.systems||[]).map(function(s){return '<span class="tag">'+SYS[s].short+'</span>'}).join('')+'</td><td class="cnt">'+c.done+'/'+c.total+'</td><td>'+(c.NC?'<span class="pill p-NC">'+c.NC+'</span>':'–')+'</td><td><button class="btn sm" data-open="'+a.id+'">เปิด</button></td></tr>'}).join('')+'</tbody></table></div>'
+     :'<div class="empty">ยังไม่มีการตรวจ เลือกทีมและระบบด้านบน แล้วกด “เริ่มตรวจ” รายการจะแสดงที่นี่ให้ทุกคนในองค์กรเห็นตรงกัน</div>')+
+   '</div>'+
+   '<p class="small muted" id="modeNote"></p></div>';
+  $('modeNote').textContent=S.mode==='db'?'บันทึกร่วมกันทั้งองค์กรแล้ว ทุกคนที่เปิดหน้านี้เห็นผลเดียวกัน':'ตอนนี้บันทึกในเบราว์เซอร์เครื่องนี้เท่านั้น (ยังไม่ได้เชื่อมที่เก็บข้อมูลร่วม)';
+  var sel=$('n-team');
+  var setScope=function(){var t=teams[+sel.value]||{systems:[]};Array.prototype.forEach.call($('n-sys').querySelectorAll('input'),function(i){i.checked=(t.systems||[]).indexOf(i.value)>=0})};
+  sel.onchange=setScope;setScope();
+  $('n-go').onclick=function(){
+    var sys=Array.prototype.filter.call($('n-sys').querySelectorAll('input'),function(i){return i.checked}).map(function(i){return i.value});
+    if(!$('n-dept').value.trim()){$('n-err').textContent='กรอกหน่วยงานที่ถูกตรวจ';return}
+    if(!sys.length){$('n-err').textContent='เลือกอย่างน้อยหนึ่งระบบ';return}
+    var a={id:uid(),name:$('n-name').value.trim()||('IQA '+n+'/2569'),dept:$('n-dept').value.trim(),date:$('n-date').value,team:+sel.value,systems:sys,results:{},created:Date.now()};
+    S.audits[a.id]=a;S.cur=a.id;saveAudit(a,true);S.filter='all';show('audit');
+  };
+  Array.prototype.forEach.call($('v-home').querySelectorAll('[data-open]'),function(b){b.onclick=function(){S.cur=b.dataset.open;S.filter='all';show('audit')}});
+}
+
+function renderTeams(){
+  var teams=getTeams(),saved=!!S.teams;
+  var html='<div style="display:flex;flex-direction:column;gap:16px"><div><h1 style="font-size:22px">ทีมตรวจติดตามภายใน</h1>'+
+   '<p class="muted" style="margin:6px 0 0;max-width:68ch">หัวหน้าทีม 8 คน ผู้ตรวจ '+AUDITORS.length+' คน แบ่งเป็นทีมละ 3–4 คน '+(saved?'':'นี่คือข้อเสนอเริ่มต้นของ QMR จัดสมาชิกและระบบที่รับผิดชอบแล้วกด “บันทึกทีม”')+'</p></div><div class="teams">';
+  teams.forEach(function(t,i){
+    html+='<div class="card team"><h3>ทีม '+(i+1)+'</h3><div class="lead">หัวหน้าทีม · '+esc(t.lead)+'</div><div class="chk">'+
+      SKEYS.map(function(s){return '<label class="small"><input type="checkbox" data-ts="'+i+'" value="'+s+'"'+((t.systems||[]).indexOf(s)>=0?' checked':'')+'> '+SYS[s].short+'</label>'}).join('')+'</div>'+
+      t.members.map(function(m){return '<div class="mem"><span>'+esc(m)+'</span><select data-mv="'+esc(m)+'" aria-label="ย้าย '+esc(m)+'">'+teams.map(function(_,j){return '<option value="'+j+'"'+(j===i?' selected':'')+'>ทีม '+(j+1)+'</option>'}).join('')+'</select></div>'}).join('')+'</div>';
+  });
+  html+='</div><div class="row"><button class="btn pri" id="t-save">บันทึกทีม</button><button class="btn" id="t-reset">คืนค่าข้อเสนอเริ่มต้น</button><span class="small muted" id="t-msg"></span></div></div>';
+  $('v-teams').innerHTML=html;
+  Array.prototype.forEach.call($('v-teams').querySelectorAll('[data-mv]'),function(sel){sel.onchange=function(){
+    var tm=getTeams(),name=sel.dataset.mv;
+    tm.forEach(function(t){t.members=t.members.filter(function(m){return m!==name})});
+    tm[+sel.value].members.push(name);S.teams=tm;renderTeams();}});
+  Array.prototype.forEach.call($('v-teams').querySelectorAll('[data-ts]'),function(cb){cb.onchange=function(){
+    var tm=getTeams(),t=tm[+cb.dataset.ts];
+    t.systems=(t.systems||[]).filter(function(s){return s!==cb.value});if(cb.checked)t.systems.push(cb.value);S.teams=tm;}});
+  $('t-save').onclick=function(){saveTeams();$('t-msg').textContent='บันทึกแล้ว'};
+  $('t-reset').onclick=function(){S.teams=defaultTeams();renderTeams()};
+}
+
+function curAudit(){return S.cur&&S.audits[S.cur]}
+function renderAudit(){
+  var a=curAudit(),el=$('v-audit');
+  if(!a){el.innerHTML='<div class="empty">ยังไม่ได้เลือกการตรวจ ไปที่ “ภาพรวม” เพื่อเปิดการตรวจใหม่หรือเลือกรายการเดิม</div>';return}
+  var rows=rowsFor(a.systems),teams=getTeams(),t=teams[a.team||0]||{lead:'',members:[]};
+  var c=stats(a);
+  var head='<div class="card"><div class="row" style="justify-content:space-between"><div><h2 style="font-size:19px">'+esc(a.name)+' · '+esc(a.dept)+'</h2><div class="small muted">FM-MR-10 · วันที่ตรวจ '+esc(thDate(a.date))+' · '+(a.systems||[]).map(function(s){return '<span class="tag">'+esc(SYS[s].name)+'</span>'}).join('')+'</div></div></div>'+
+    '<div class="small" style="margin-top:8px"><b>หัวหน้าทีม</b> '+esc(t.lead)+' · <b>ผู้ตรวจ</b> '+esc(t.members.join(', '))+'</div></div>';
+  var bar='<div class="stick"><div class="prog"><i style="width:'+(c.total?Math.round(c.done/c.total*100):0)+'%"></i></div><span class="cnt" id="cnt">'+c.done+'/'+c.total+'</span>'+
+    '<span class="pill p-PASS" id="c-PASS">PASS '+c.PASS+'</span><span class="pill p-OBS" id="c-OBS">OBS '+c.OBS+'</span><span class="pill p-NC" id="c-NC">NC '+c.NC+'</span><span class="pill p-NA" id="c-NA">N/A '+c.NA+'</span>'+
+    '<select id="flt" style="width:auto"><option value="all">ทุกข้อ</option><option value="open">ยังไม่ตรวจ</option><option value="NC">เฉพาะ NC</option><option value="OBS">เฉพาะ OBS</option></select></div>';
+  var body='',last='';
+  rows.forEach(function(r){
+    var v=(a.results||{})[r.id]||{};
+    if(S.filter==='open'&&v.r)return;if((S.filter==='NC'||S.filter==='OBS')&&v.r!==S.filter)return;
+    if(r.group!==last){body+='<div class="sec">'+esc(r.group)+'</div>';last=r.group}
+    body+='<div class="item" data-id="'+r.id+'"><div class="cl">'+r.qs.map(function(q){return '<span>'+esc(q.c)+'</span>'}).join('')+'</div><div><h4>'+esc(r.title)+'</h4>'+
+      r.qs.map(function(q){return '<p class="q">'+(r.qs.length>1?'<span class="tag">'+SYS[q.s].short+' '+esc(q.c)+'</span>':'')+esc(q.q)+'</p>'}).join('')+'</div>'+
+      '<div class="ctl"><div class="res" role="group" aria-label="ผลการตรวจ">'+['PASS','OBS','NC','NA'].map(function(x){return '<button data-r="'+x+'" aria-pressed="'+(v.r===x)+'">'+(x==='NA'?'N/A':x)+'</button>'}).join('')+'</div>'+
+      '<textarea placeholder="บันทึกหลักฐาน / ข้อสังเกต" aria-label="บันทึก">'+esc(v.n||'')+'</textarea></div></div>';
+  });
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'+head+bar+'<div>'+(body||'<div class="empty">ไม่มีข้อที่ตรงกับตัวกรอง</div>')+'</div>'+
+   '<div class="note">คำจำกัดความ: PASS สอดคล้อง · OBS ข้อสังเกต/โอกาสปรับปรุง · NC ไม่สอดคล้อง (ต้องออก CAR) · N/A ไม่เกี่ยวข้องกับพื้นที่ที่ตรวจ</div>'+
+   '<div class="row"><button class="btn pri" id="a-sum">ไปหน้าสรุปผล</button><button class="btn" id="a-del">ลบการตรวจนี้</button><span class="small muted" id="a-conf"></span></div></div>';
+  $('flt').value=S.filter;$('flt').onchange=function(){S.filter=this.value;renderAudit()};
+  $('a-sum').onclick=function(){show('sum')};
+  $('a-del').onclick=function(){
+    var b=this;if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='กดอีกครั้งเพื่อยืนยันลบ';return}
+    removeAudit(a.id);S.cur=null;show('home')};
+  Array.prototype.forEach.call(el.querySelectorAll('.item'),function(it){
+    var id=it.dataset.id;
+    Array.prototype.forEach.call(it.querySelectorAll('.res button'),function(b){b.onclick=function(){
+      a.results=a.results||{};var cur=a.results[id]||{};
+      cur.r=(cur.r===b.dataset.r)?'':b.dataset.r;a.results[id]=cur;saveAudit(a);
+      Array.prototype.forEach.call(it.querySelectorAll('.res button'),function(x){x.setAttribute('aria-pressed',x.dataset.r===cur.r)});
+      refreshCounts(a);}});
+    it.querySelector('textarea').oninput=function(){a.results=a.results||{};var cur=a.results[id]||{};cur.n=this.value;a.results[id]=cur;saveAudit(a)};
+  });
+}
+function refreshCounts(a){
+  var c=stats(a),p=document.querySelector('.stick .prog i');if(!p)return;
+  p.style.width=(c.total?Math.round(c.done/c.total*100):0)+'%';
+  $('cnt').textContent=c.done+'/'+c.total;
+  $('c-PASS').textContent='PASS '+c.PASS;$('c-OBS').textContent='OBS '+c.OBS;$('c-NC').textContent='NC '+c.NC;$('c-NA').textContent='N/A '+c.NA;
+}
+
+function csvOf(a){
+  var rows=rowsFor(a.systems),teams=getTeams(),t=teams[a.team||0]||{lead:'',members:[]};
+  var out=[['FM-MR-10 รายการตรวจสอบ',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],[],['กลุ่ม','ข้อกำหนด','หัวข้อ','ผลตรวจ','บันทึก']];
+  rows.forEach(function(r){var v=(a.results||{})[r.id]||{};
+    out.push([r.group,r.qs.map(function(q){return SYS[q.s].short+' '+q.c}).join(' / '),r.title,v.r==='NA'?'N/A':(v.r||''),v.n||''])});
+  return '﻿'+out.map(function(r){return r.map(function(x){return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
+}
+function renderSum(){
+  var a=curAudit(),el=$('v-sum');
+  if(!a){el.innerHTML='<div class="empty">ยังไม่ได้เลือกการตรวจ ไปที่ “ภาพรวม” เพื่อเปิดรายการ</div>';return}
+  var rows=rowsFor(a.systems),c=stats(a);
+  var per=a.systems.map(function(s){
+    var k={PASS:0,OBS:0,NC:0,NA:0,open:0};
+    rows.forEach(function(r){if(!r.qs.some(function(q){return q.s===s}))return;var v=(a.results||{})[r.id];if(v&&v.r)k[v.r]++;else k.open++});
+    var ap=k.PASS+k.OBS+k.NC;
+    return '<tr><td><b>'+esc(SYS[s].name)+'</b></td><td>'+k.PASS+'</td><td>'+k.OBS+'</td><td>'+k.NC+'</td><td>'+k.NA+'</td><td>'+k.open+'</td><td>'+(ap?Math.round(k.PASS/ap*100)+'%':'–')+'</td></tr>'}).join('');
+  var findings=rows.filter(function(r){var v=(a.results||{})[r.id];return v&&(v.r==='NC'||v.r==='OBS')});
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:16px"><div><h1 style="font-size:22px">สรุปผล · '+esc(a.name)+'</h1><p class="muted" style="margin:4px 0 0">'+esc(a.dept)+' · '+esc(thDate(a.date))+' · ตรวจแล้ว '+c.done+' จาก '+c.total+' ข้อ</p></div>'+
+   '<div class="card scroll"><table><thead><tr><th>ระบบ</th><th>PASS</th><th>OBS</th><th>NC</th><th>N/A</th><th>ค้าง</th><th>สอดคล้อง</th></tr></thead><tbody>'+per+'</tbody></table>'+
+   '<p class="small muted" style="margin:8px 0 0">สอดคล้อง = PASS ÷ (PASS + OBS + NC) ข้อร่วมระหว่างระบบนับให้ทุกระบบที่เลือก</p></div>'+
+   '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">ข้อพบ NC / OBS ('+findings.length+')</h2>'+
+   (findings.length?findings.map(function(r){var v=a.results[r.id];return '<div class="item" style="grid-template-columns:90px minmax(0,1fr)"><div><span class="pill p-'+v.r+'">'+v.r+'</span></div><div><b>'+esc(r.title)+'</b> <span class="small muted">'+r.qs.map(function(q){return SYS[q.s].short+' '+esc(q.c)}).join(' · ')+'</span><div class="small">'+esc(v.n||'ไม่มีบันทึก')+'</div></div></div>'}).join(''):'<div class="empty">ยังไม่พบ NC หรือ OBS</div>')+'</div>'+
+   '<div class="row"><button class="btn pri" id="s-csv">บันทึกไฟล์ CSV (Excel)</button><button class="btn" id="s-copy">คัดลอกสรุป</button><span class="small muted" id="s-msg"></span></div></div>';
+  $('s-csv').onclick=function(){
+    try{var blob=new Blob([csvOf(a)],{type:'text/csv;charset=utf-8'});var u=URL.createObjectURL(blob);var l=document.createElement('a');
+      l.href=u;l.download=('FM-MR-10_'+a.name+'_'+a.dept).replace(/[\\/:*?"<>|\s]+/g,'_')+'.csv';document.body.appendChild(l);l.click();l.remove();
+      setTimeout(function(){URL.revokeObjectURL(u)},2000);$('s-msg').textContent='ดาวน์โหลดแล้ว'}catch(e){$('s-msg').textContent='ส่งออกไม่ได้'}};
+  $('s-copy').onclick=function(){
+    var txt=a.name+' · '+a.dept+' · '+thDate(a.date)+'\nPASS '+c.PASS+' | OBS '+c.OBS+' | NC '+c.NC+' | N/A '+c.NA+' | ค้าง '+c.open+'\n'+findings.map(function(r){var v=a.results[r.id];return '['+v.r+'] '+r.title+(v.n?' – '+v.n:'')}).join('\n');
+    var ok=function(){$('s-msg').textContent='คัดลอกแล้ว'};
+    try{navigator.clipboard.writeText(txt).then(ok,function(){$('s-msg').textContent='คัดลอกไม่ได้ในมุมมองนี้'})}catch(e){$('s-msg').textContent='คัดลอกไม่ได้ในมุมมองนี้'}};
+}
+
+/* ---------- boot ---------- */
+Array.prototype.forEach.call($('nav').children,function(b){b.onclick=function(){show(b.dataset.t)}});
+var loc=lsGet('kst-hub-audits');if(loc)S.audits=loc;
+var lt=lsGet('kst-hub-teams');if(lt)S.teams=lt;
+show('home');
+/* ---------- Supabase backend ---------- */
+var CFG=window.KST_CONFIG||{};
+function configured(){return CFG.url&&CFG.anonKey&&CFG.url.indexOf('YOUR-')<0&&CFG.anonKey.indexOf('YOUR-')<0}
+function adapter(sb){
+  function snapDocs(rows){return {docs:rows.map(function(r){return{id:r.id,data:function(){return r.data}}})}}
+  var ch=0;
+  return{
+    doc:function(path){var p=path.split('/'),tbl=p[0],id=p[1];
+      return{
+        set:function(d){var row=tbl==='audits'?{id:id,data:d,updated_at:new Date().toISOString()}:{key:id,data:d,updated_at:new Date().toISOString()};
+          return sb.from(tbl).upsert(row).then(function(r){if(r.error)throw r.error})},
+        delete:function(){return sb.from(tbl).delete().eq(tbl==='audits'?'id':'key',id).then(function(r){if(r.error)throw r.error})},
+        onSnapshot:function(next){
+          var load=function(){sb.from(tbl).select('data').eq('key',id).maybeSingle().then(function(r){
+            var d=r.data&&r.data.data;next({exists:!!d,data:function(){return d}})})};
+          load();sb.channel('cfg'+(++ch)).on('postgres_changes',{event:'*',schema:'public',table:tbl},load).subscribe();}
+      }},
+    collection:function(tbl){return{
+      onSnapshot:function(next){
+        var load=function(){sb.from(tbl).select('id,data').then(function(r){if(!r.error)next(snapDocs(r.data||[]))})};
+        load();sb.channel('col'+(++ch)).on('postgres_changes',{event:'*',schema:'public',table:tbl},load).subscribe();}
+    }}
+  };
+}
+function attach(db){
+  S.db=db;S.mode='db';S.audits={};
+  db.collection('audits').onSnapshot(function(snap){
+    var m={};snap.docs.forEach(function(d){m[d.id]=d.data()});S.audits=m;
+    var ae=document.activeElement;
+    if(S.tab==='home')renderHome();
+    else if(S.tab==='sum')renderSum();
+    else if(S.tab==='audit'&&!(ae&&ae.tagName==='TEXTAREA')&&!Object.keys(timers).length)renderAudit();
+  });
+  db.doc('config/teams').onSnapshot(function(s){
+    if(s.exists&&s.data()&&s.data().teams){S.teams=s.data().teams;if(S.tab==='teams'&&!(document.activeElement&&document.activeElement.tagName==='SELECT'))renderTeams()}
+  });
+}
+function loginView(sb,msg){
+  document.querySelector('main').hidden=true;document.querySelector('header.top').hidden=true;
+  var d=document.getElementById('login');if(!d){d=document.createElement('div');d.id='login';d.className='login wrap';document.body.appendChild(d)}
+  d.innerHTML='<h1 style="font-size:24px">KST Audit Hub</h1><p class="muted" style="margin:0">ล็อกอินด้วยอีเมลบริษัท ระบบจะส่งลิงก์เข้าสู่ระบบไปที่อีเมล</p>'+
+   '<label class="f">อีเมล<input id="lg-mail" type="email" placeholder="name@kst-hatyai.com" autocomplete="email"></label>'+
+   '<button class="btn pri" id="lg-go">ส่งลิงก์เข้าสู่ระบบ</button><div class="small" id="lg-msg">'+esc(msg||'')+'</div>';
+  document.getElementById('lg-go').onclick=function(){
+    var m=document.getElementById('lg-mail').value.trim();if(!m)return;
+    sb.auth.signInWithOtp({email:m,options:{emailRedirectTo:location.href.split('#')[0]}}).then(function(r){
+      document.getElementById('lg-msg').textContent=r.error?('ส่งไม่ได้: '+r.error.message):'ส่งลิงก์แล้ว เปิดอีเมลและกดลิงก์เพื่อเข้าใช้งาน'})};
+}
+function start(sb){
+  var d=document.getElementById('login');if(d)d.remove();
+  document.querySelector('main').hidden=false;document.querySelector('header.top').hidden=false;
+  S.audits={};attach(adapter(sb));
+}
+if(configured()&&window.supabase){
+  var sb=window.supabase.createClient(CFG.url,CFG.anonKey);
+  sb.auth.getSession().then(function(r){
+    if(r.data&&r.data.session)start(sb);else loginView(sb);
+    sb.auth.onAuthStateChange(function(ev,sess){if(sess&&!S.db)start(sb)});
+  });
+}
+})();
+</script>
+</body></html>
