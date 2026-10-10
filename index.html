@@ -103,6 +103,7 @@ body{margin:0}
 .car .form{margin-top:12px}
 .car textarea{min-height:64px}
 .wide{grid-column:1/-1}
+.sevbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;padding:6px 8px;border:1px dashed var(--nc);border-radius:8px}.sevbox .res button[aria-pressed=true][data-s=MA]{background:var(--nc);color:#fff;border-color:var(--nc)}.sevbox .res button[aria-pressed=true][data-s=MI]{background:var(--obs-soft);color:var(--obs);border-color:var(--obs)}
 .pill.s-MA{background:var(--nc-soft);color:var(--nc)}.pill.s-MI{background:var(--obs-soft);color:var(--obs)}.pill.s-OBS{background:var(--accent-soft);color:var(--accent)}
 .hint{font-size:12px;color:var(--muted)}
 #printArea{display:none}
@@ -160,12 +161,20 @@ var SYS={
   bap:{name:'BAP SPS 6.0',short:'BAP'}
 };
 var SKEYS=['q9','e14','f22','bap'];
-var LEADS=['คุณกีต้าร์','คุณณัฐณภัคร์','คุณวิมลพร','คุณรัชชานนท์','คุณภูริภัทร','คุณวลัยกาญจน์','คุณประทุม','คุณต่อศักดิ์'];
-var AUDITORS=['คุณทรงสิทธิ์','คุณธนิดา','คุณอเนกพงษ์','คุณพิมพ์พญา','คุณอุทุมพร','คุณนารีรัตน์','คุณภัทรญา','คุณศดานันท์','คุณภาวินา','คุณอนุเชษฐ์','คุณณิชาวีร์',
- 'คุณจิราภรณ์','คุณมัสลีนา','คุณกานต์พิชชา','คุณณัฐธิดา','คุณสมฤทัย','คุณจุฑามาศ','คุณวริษา','คุณวนิดา','คุณกมลรัตน์',
- 'คุณวันจันทร์','คุณหล่อหย๊ะ','คุณบุษรา','คุณพงศกร','คุณสุภานัน','คุณอนิสา','คุณพิพิธ','คุณณัฐซิตา','คุณอัสริยาพร','คุณนฤเบศร์','คุณกาญจนา'];
+/* FM-MR-24 R03 กำหนดการตรวจติดตามภายใน ครั้งที่ 1/2026 */
+var FM24={no:'FM-MR-24 R03',round:'1/2026',prep:'06-10-2026',time:'09.00-16.00 น.'};
+var FM24T=[
+ {lead:'คุณรัชชานนท์',members:['คุณศดานันท์','คุณธนิดา'],observers:['คุณพิมพ์พญา'],dates:'12-14/10/2026',depts:['ฝ่ายบริหาร QMR (MR)','ฝ่ายธุรการสำนักงาน (AD)']},
+ {lead:'คุณต่อศักดิ์',members:['คุณวันจันทร์','คุณบุษรา','คุณหล่อหย๊ะ'],observers:['คุณอเนกพงษ์'],dates:'12-14/10/2026',depts:['ฝ่ายทรัพยากรบุคคล (HR)','ฝ่ายเทคโนโลยีสารสนเทศ (IT)']},
+ {lead:'คุณทรงสิทธิ์',members:['คุณภาวินา','คุณอุทุมพร'],observers:['คุณกมลรัตน์'],dates:'16/10/2026, 19/10/2026',depts:['ฝ่ายขาย (SL)','ฝ่ายส่งออก (EX)']},
+ {lead:'คุณภูริภัทร',members:['คุณวริษา','คุณณัฐซิตา'],observers:['คุณวนิดา'],dates:'14-15/10/2026',depts:['ฝ่ายวางแผน (PN)','ฝ่ายจัดซื้อวัตถุดิบ (PR)','ฝ่ายจัดซื้อทั่วไป (PU)']},
+ {lead:'คุณประทุม',members:['คุณสมฤทัย','คุณณัฐธิดา','คุณณิชาวีร์'],observers:['คุณเอกชัย'],dates:'15-17/10/2026',depts:['ฝ่ายควบคุมคุณภาพการผลิตกุ้งต้ม (QC กุ้งต้ม)','ฝ่ายผลิตกุ้งต้ม (PD กุ้งต้ม)','Sanitation ไลน์กุ้งต้ม']},
+ {lead:'คุณวิมลพร',members:['คุณมัสลีนา','คุณกานต์พิชชา','คุณอนุเชษฐ์','คุณณิชาวีร์'],observers:['คุณจุฑามาศ'],dates:'12-14/10/2026',depts:['ฝ่ายควบคุมคุณภาพการผลิตกุ้งดิบและกุ้งทอด (QC กุ้งดิบและกุ้งทอด)','ฝ่ายผลิตกุ้งดิบและกุ้งทอด (PD กุ้งดิบและกุ้งทอด)','Sanitation ไลน์กุ้งดิบและกุ้งทอด']},
+ {lead:'คุณณัฐณภัคร์',members:['คุณนฤเบศร์','คุณจิราภรณ์'],observers:['คุณกาญจนา'],dates:'15-17/10/2026',depts:['ฝ่ายประกันคุณภาพ (QA)','ฝ่ายวิจัยและพัฒนา (RD)']},
+ {lead:'คุณวลัยกาญจน์',members:['คุณพิพิธ','คุณณัฐซิตา','คุณอนิสา'],observers:['คุณสุภานัน'],dates:'15-17/10/2026',depts:['ฝ่ายวิศวกรรม (EN)','หน่วยงานความปลอดภัยและอาชีวอนามัย (SF)','หน่วยงานระบบบริหารจัดการสิ่งแวดล้อม (EV)'],systems:['e14','f22','bap']},
+ {lead:'คุณกีต้าร์',members:['คุณพงศกร','คุณอัสริยาพร'],observers:['คุณภัทรญา'],dates:'19-20/10/2026',depts:['ฝ่ายสโตร์ (ST)','ฝ่ายคลังสินค้า (CS)']}
+];
 var DEPTS=['ฝ่ายผลิต (PD)','QA / QC / R&D','จัดซื้อวัตถุดิบ (PR)','คลัง-สโตร์ (CS-ST)','วิศวกรรม / ซ่อมบำรุง','ระบบทำความเย็น','HR / ความปลอดภัย','สิ่งแวดล้อม / บำบัดน้ำเสีย','IT / MR','ขาย / ส่งออก'];
-var DEFAULT_SCOPE=[['q9'],['q9'],['e14'],['e14'],['f22'],['f22'],['bap'],['bap']];
 
 /* Shared clauses (ISO 9001 / 14001 / 22000 follow the same high-level structure): one row, one result, several questions */
 var HLS=[
@@ -338,15 +347,20 @@ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
 /* ---------- teams ---------- */
 function defaultTeams(){
-  var t=LEADS.map(function(l,i){return{lead:l,members:[],systems:DEFAULT_SCOPE[i].slice()}});
-  AUDITORS.forEach(function(a,i){t[i%t.length].members.push(a)});
-  return t;
+  return FM24T.map(function(x){return{lead:x.lead,members:x.members.slice(),observers:x.observers.slice(),dates:x.dates,time:FM24.time,depts:x.depts.slice(),systems:(x.systems||['f22','bap']).slice()}});
+}
+function normTeams(t){
+  return (t||[]).map(function(x){x=x||{};return{lead:x.lead||'',members:x.members||[],observers:x.observers||[],dates:x.dates||'',time:x.time||FM24.time,depts:x.depts||[],systems:x.systems||[]}});
 }
 function getTeams(){return S.teams||defaultTeams()}
+function firstDate(txt){
+  var m=String(txt||'').match(/(\d{1,2})(?:\s*-\s*\d{1,2})?\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})/);
+  if(!m)return '';return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+}
 function saveTeams(){
-  S.teams=getTeams();
-  if(S.db){S.db.doc('config/teams').set({teams:S.teams,updated:Date.now()}).catch(function(){})}
-  else lsSet('kst-hub-teams',S.teams);
+  S.teams=normTeams(getTeams());
+  if(S.db){S.db.doc('config/teams').set({ver:3,teams:S.teams,updated:Date.now()}).catch(function(){})}
+  else lsSet('kst-hub-teams',{ver:3,teams:S.teams});
 }
 
 /* ---------- audit sessions ---------- */
@@ -368,8 +382,8 @@ function removeAudit(id){
 
 /* build the checklist rows for a session from its selected systems */
 function stats(a){
-  var rows=rowsFor(a.systems||[]),c={PASS:0,OBS:0,NC:0,NA:0,open:0};
-  rows.forEach(function(r){var v=(a.results||{})[r.id];if(v&&v.r)c[v.r]++;else c.open++});
+  var rows=rowsFor(a.systems||[]),c={PASS:0,OBS:0,NC:0,NA:0,open:0,MA:0,MI:0,NS:0};
+  rows.forEach(function(r){var v=(a.results||{})[r.id];if(v&&v.r){c[v.r]++;if(v.r==='NC'){if(v.s==='MA')c.MA++;else if(v.s==='MI')c.MI++;else c.NS++}}else c.open++});
   c.total=rows.length;c.done=c.total-c.open;
   var ap=c.PASS+c.OBS+c.NC;c.pct=ap?Math.round(c.PASS/ap*100):null;
   return c;
@@ -405,27 +419,34 @@ function renderHome(){
     '<label class="f">ชื่อการตรวจ<input id="n-name" value="IQA '+n+'/2569"></label>'+
     '<label class="f">หน่วยงานที่ถูกตรวจ<input id="n-dept" list="deptlist" placeholder="เช่น ฝ่ายผลิต (PD)"><datalist id="deptlist">'+DEPTS.map(function(d){return '<option value="'+esc(d)+'">'}).join('')+'</datalist></label>'+
     '<label class="f">วันที่ตรวจ<input id="n-date" type="date" value="'+today+'"></label>'+
+    '<label class="f">เวลาที่เข้าตรวจ<input id="n-time" placeholder="เช่น 09.00-16.00 น."></label>'+
     '<label class="f">ทีมตรวจ<select id="n-team">'+teamOpts+'</select></label></div>'+
     '<div style="margin-top:12px" class="f"><span class="small muted">ระบบที่ตรวจ</span><div class="chk" id="n-sys" style="margin-top:6px">'+
      SKEYS.map(function(s){return '<label><input type="checkbox" value="'+s+'"> '+esc(SYS[s].name)+'</label>'}).join('')+'</div></div>'+
     '<p class="note" style="margin:12px 0">ผู้ตรวจต้องไม่ตรวจงานของตนเอง (ISO 9.2) เลือกทีมที่ไม่ได้สังกัดหน่วยงานที่ถูกตรวจ</p>'+
-    ''+(teamOpts?'<button class="btn pri" id="n-go">เริ่มตรวจ</button>':'<span class="ro">คุณยังไม่ได้อยู่ในทีมตรวจ — ดูผลอย่างเดียว (ขอให้ QMR เพิ่มอีเมลของคุณในหน้า “ทีมตรวจ”)</span>')+' <span class="small muted" id="n-err"></span></div>'+
+    ''+(teamOpts?'<button class="btn pri" id="n-go">เริ่มตรวจ</button>':'<span class="ro">คุณยังไม่ได้อยู่ในทีมตรวจ — ดูผลอย่างเดียว (ขอให้ QMR เพิ่มอีเมลของคุณในหน้า “ทีมตรวจ”)</span>')+' <span class="small muted" id="n-err"></span><p class="small muted" id="n-hint" style="margin:8px 0 0"></p></div>'+
    '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">การตรวจทั้งหมด</h2>'+
     (list.length?'<div class="scroll"><table><thead><tr><th>ชื่อ</th><th>หน่วยงาน</th><th>วันที่</th><th>ระบบ</th><th>ความคืบหน้า</th><th>NC</th><th></th></tr></thead><tbody>'+
-     list.map(function(a){var c=stats(a);return '<tr><td><b>'+esc(a.name)+'</b><div class="small muted">ทีม '+((a.team||0)+1)+' · '+esc((teams[a.team||0]||{}).lead||'')+'</div></td><td>'+esc(a.dept)+'</td><td>'+esc(thDate(a.date))+'</td><td>'+(a.systems||[]).map(function(s){return '<span class="tag">'+SYS[s].short+'</span>'}).join('')+'</td><td class="cnt">'+c.done+'/'+c.total+'</td><td>'+(c.NC?'<span class="pill p-NC">'+c.NC+'</span>':'–')+'</td><td><button class="btn sm" data-open="'+a.id+'">เปิด</button></td></tr>'}).join('')+'</tbody></table></div>'
+     list.map(function(a){var c=stats(a);return '<tr><td><b>'+esc(a.name)+'</b><div class="small muted">ทีม '+((a.team||0)+1)+' · '+esc((teams[a.team||0]||{}).lead||'')+'</div></td><td>'+esc(a.dept)+'</td><td>'+esc(thDate(a.date))+(a.time?'<div class="small muted">'+esc(a.time)+'</div>':'')+'</td><td>'+(a.systems||[]).map(function(s){return '<span class="tag">'+SYS[s].short+'</span>'}).join('')+'</td><td class="cnt">'+c.done+'/'+c.total+'</td><td>'+(c.NC?'<span class="pill p-NC">'+c.NC+'</span>':'–')+'</td><td><button class="btn sm" data-open="'+a.id+'">เปิด</button></td></tr>'}).join('')+'</tbody></table></div>'
      :'<div class="empty">ยังไม่มีการตรวจ เลือกทีมและระบบด้านบน แล้วกด “เริ่มตรวจ” รายการจะแสดงที่นี่ให้ทุกคนในองค์กรเห็นตรงกัน</div>')+
    '</div>'+
    '<p class="small muted" id="modeNote"></p></div>';
   $('modeNote').textContent=S.mode==='db'?'บันทึกร่วมกันทั้งองค์กรแล้ว ทุกคนที่เปิดหน้านี้เห็นผลเดียวกัน':'ตอนนี้บันทึกในเบราว์เซอร์เครื่องนี้เท่านั้น (ยังไม่ได้เชื่อมที่เก็บข้อมูลร่วม)';
   var sel=$('n-team');
   var setScope=function(){var t=teams[+sel.value]||{systems:[]};Array.prototype.forEach.call($('n-sys').querySelectorAll('input'),function(i){i.checked=(t.systems||[]).indexOf(i.value)>=0})};
-  sel.onchange=setScope;setScope();
+  var auto={dept:'',date:today,time:''};
+  var setSched=function(){var t=teams[+sel.value]||{};var dl=$('deptlist');
+    dl.innerHTML=(t.depts||[]).concat(DEPTS).map(function(d){return '<option value="'+esc(d)+'">'}).join('');
+    var f=function(id,k,v){var e=$(id);if(!e.value||e.value===auto[k]){e.value=v;auto[k]=v}};
+    f('n-dept','dept',(t.depts||[])[0]||'');f('n-date','date',firstDate(t.dates)||today);f('n-time','time',t.time||'');
+    $('n-hint').textContent=t.dates?('กำหนดการตามแผน FM-MR-24: '+t.dates+' · '+(t.time||'')+' · หน่วยงาน: '+(t.depts||[]).join(' / ')):'';};
+  sel.onchange=function(){setScope();setSched()};setScope();setSched();
   $('n-go').onclick=function(){
     var sys=Array.prototype.filter.call($('n-sys').querySelectorAll('input'),function(i){return i.checked}).map(function(i){return i.value});
     if(!canTeam(+sel.value)){$('n-err').textContent='คุณไม่มีสิทธิ์เปิดการตรวจของทีมนี้';return}
     if(!$('n-dept').value.trim()){$('n-err').textContent='กรอกหน่วยงานที่ถูกตรวจ';return}
     if(!sys.length){$('n-err').textContent='เลือกอย่างน้อยหนึ่งระบบ';return}
-    var a={id:uid(),name:$('n-name').value.trim()||('IQA '+n+'/2569'),dept:$('n-dept').value.trim(),date:$('n-date').value,team:+sel.value,systems:sys,results:{},created:Date.now()};
+    var a={id:uid(),name:$('n-name').value.trim()||('IQA '+n+'/2569'),dept:$('n-dept').value.trim(),date:$('n-date').value,time:$('n-time').value.trim(),team:+sel.value,systems:sys,results:{},created:Date.now()};
     S.audits[a.id]=a;S.cur=a.id;saveAudit(a,true);S.filter='all';show('audit');
   };
   Array.prototype.forEach.call($('v-home').querySelectorAll('[data-open]'),function(b){b.onclick=function(){S.cur=b.dataset.open;S.filter='all';show('audit')}});
@@ -436,15 +457,16 @@ var ADMIN_EMAIL='torsak.ar@kst-hatyai.com',ADMIN2='kitar.sa@ksthatyai365.onmicro
 function lc(s){return String(s||'').trim().toLowerCase()}
 function computeMe(){
   var em=lc(S.email),row=(S.members||[]).filter(function(m){return lc(m.email)===em})[0];
-  S.me={email:S.email||'',admin:!S.db||em===ADMIN_EMAIL||em===ADMIN2||!!(row&&row.is_admin),team:row&&row.team!=null?+row.team:null,name:row?row.name:'',role:row?row.role:''};
+  S.me={email:S.email||'',admin:!S.db||em===ADMIN_EMAIL||em===ADMIN2||!!(row&&row.is_admin),team:row&&row.team!=null?+row.team:null,teams:row?((row.teams&&row.teams.length)?row.teams.map(Number):(row.team!=null?[+row.team]:[])):[],name:row?row.name:'',role:row?row.role:''};
 }
-function canTeam(i){return !S.db||S.me.admin||(S.me.team!=null&&S.me.team===+i)}
-function canEdit(x){return !S.db||S.me.admin||(S.me.team!=null&&x&&x.team!=null&&S.me.team===+x.team)}
+function inTeam(i){return (S.me.teams||[]).indexOf(+i)>=0}
+function canTeam(i){return !S.db||S.me.admin||inTeam(i)}
+function canEdit(x){return !S.db||S.me.admin||(x&&x.team!=null&&inTeam(x.team))}
 function toast(m){var d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove()},4200)}
 function whoRender(){
   var w=$('who');if(!w)return;
   if(!S.db){w.textContent='';return}
-  var t=S.me.admin?'ผู้ดูแล (QMR)':S.me.team!=null?('ทีม '+(S.me.team+1)+(S.me.role==='lead'?' · หัวหน้าทีม':' · ผู้ตรวจ')):'ดูอย่างเดียว';
+  var t=S.me.admin?'ผู้ดูแล (QMR)':(S.me.teams&&S.me.teams.length)?('ทีม '+S.me.teams.map(function(x){return x+1}).join(', ')+(S.me.role==='lead'?' · หัวหน้าทีม':' · ผู้ตรวจ')):(S.me.role==='observer'?'ผู้สังเกตการณ์ (ดูอย่างเดียว)':'ดูอย่างเดียว');
   w.innerHTML='<span>'+esc(S.email)+' · <b>'+esc(t)+'</b></span><button class="btn sm" id="w-out">ออก</button>';
   $('w-out').onclick=function(){S.sb.auth.signOut().then(function(){location.reload()})};
 }
@@ -456,25 +478,28 @@ function renderTeams(){
   var teams=getTeams(),saved=!!S.teams,adm=S.me.admin,ed=adm;
   S.draft=S.draft||{};
   var html='<div style="display:flex;flex-direction:column;gap:16px"><div><h1 style="font-size:22px">ทีมตรวจติดตามภายใน</h1>'+
-   '<p class="muted" style="margin:6px 0 0;max-width:72ch">หัวหน้าทีม 8 คน ผู้ตรวจ '+AUDITORS.length+' คน '+(S.db?(adm?'ผู้ดูแล (QMR) กรอกอีเมลของแต่ละคนเพื่อกำหนดสิทธิ์: แต่ละคนแก้ไขได้เฉพาะผลตรวจและ CAR ของทีมตัวเอง':'เฉพาะผู้ดูแล (QMR) แก้ไขทีมและอีเมลได้'):'')+(saved?'':' · ตอนนี้เป็นข้อเสนอเริ่มต้น')+'</p></div>';
+   '<p class="muted" style="margin:6px 0 0;max-width:72ch">'+teams.length+' ทีม ตามกำหนดการ FM-MR-24 ('+FM24.round+') · ผู้สังเกตการณ์ไม่มีสิทธิ์แก้ผลตรวจ · คนที่อยู่หลายทีมใช้อีเมลเดียวและแก้ไขได้ทุกทีมที่สังกัด '+(S.db?(adm?'ผู้ดูแล (QMR) กรอกอีเมลของแต่ละคนเพื่อกำหนดสิทธิ์: แต่ละคนแก้ไขได้เฉพาะผลตรวจและ CAR ของทีมตัวเอง':'เฉพาะผู้ดูแล (QMR) แก้ไขทีมและอีเมลได้'):'')+(saved?'':' · ตอนนี้เป็นข้อเสนอเริ่มต้น')+'</p></div>';
   if(adm&&S.db){
     html+='<div class="card"><b>วางรายชื่อ + อีเมลทีละบรรทัด</b> <span class="hint">เช่น “ทรงสิทธิ์ somchai@kst-hatyai.com” ระบบจะจับคู่กับรายชื่อด้านล่าง</span>'+
      '<textarea id="t-bulk" style="min-height:90px;margin-top:6px" placeholder="ชื่อ อีเมล"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="t-match">จับคู่อีเมล</button><span class="small muted" id="t-bm"></span></div></div>';
   }
   html+='<div class="teams">';
   teams.forEach(function(t,i){
-    var mine=S.db&&S.me.team===i;
+    var mine=S.db&&inTeam(i);
     html+='<div class="card team"'+(mine?' style="border-color:var(--accent)"':'')+'><h3>ทีม '+(i+1)+(mine?' <span class="tag">ทีมของคุณ</span>':'')+'</h3><div class="lead">หัวหน้าทีม · '+esc(t.lead)+'</div>'+
+     (ed?'<div class="form" style="grid-template-columns:1fr 1fr;gap:6px;margin:6px 0"><label class="f small">วันที่ตรวจ<input data-tf="dates" data-ti="'+i+'" value="'+esc(t.dates||'')+'" placeholder="12-14/10/2026"></label><label class="f small">เวลาที่เข้าตรวจ<input data-tf="time" data-ti="'+i+'" value="'+esc(t.time||'')+'" placeholder="09.00-16.00 น."></label><label class="f small" style="grid-column:1/3">หน่วยงานที่ตรวจ (บรรทัดละหน่วยงาน)<textarea data-tf="depts" data-ti="'+i+'" style="min-height:64px">'+esc((t.depts||[]).join('\n'))+'</textarea></label></div>'
+       :'<div class="small" style="margin:4px 0"><b>วันที่</b> '+esc(t.dates||'–')+' · <b>เวลา</b> '+esc(t.time||'–')+'<br><b>หน่วยงาน</b> '+esc((t.depts||[]).join(' / ')||'–')+'</div>')+
      (adm&&S.db?'<input data-em="'+esc(t.lead)+'" type="email" placeholder="อีเมลหัวหน้าทีม" value="'+esc(emailOf(t.lead))+'">':'')+
      '<div class="chk">'+SKEYS.map(function(s){return '<label class="small"><input type="checkbox" data-ts="'+i+'" value="'+s+'"'+((t.systems||[]).indexOf(s)>=0?' checked':'')+(ed?'':' disabled')+'> '+SYS[s].short+'</label>'}).join('')+'</div>'+
-     t.members.map(function(m){return '<div class="mem" style="flex-wrap:wrap"><span>'+esc(m)+'</span>'+(ed?'<select data-mv="'+esc(m)+'" aria-label="ย้าย '+esc(m)+'">'+teams.map(function(_,j){return '<option value="'+j+'"'+(j===i?' selected':'')+'>ทีม '+(j+1)+'</option>'}).join('')+'</select>':'')+
-       (adm&&S.db?'<input style="flex:1 1 100%" data-em="'+esc(m)+'" type="email" placeholder="อีเมล" value="'+esc(emailOf(m))+'">':'')+'</div>'}).join('')+'</div>';
+     t.members.map(function(m){return '<div class="mem" style="flex-wrap:wrap"><span>'+esc(m)+'</span>'+(ed?'<select data-mv="'+esc(m)+'" data-from="'+i+'" aria-label="ย้าย '+esc(m)+'">'+teams.map(function(_,j){return '<option value="'+j+'"'+(j===i?' selected':'')+'>ทีม '+(j+1)+'</option>'}).join('')+'</select>':'')+
+       (adm&&S.db?'<input style="flex:1 1 100%" data-em="'+esc(m)+'" type="email" placeholder="อีเมล" value="'+esc(emailOf(m))+'">':'')+'</div>'}).join('')+
+     (t.observers&&t.observers.length?'<div class="small muted" style="margin-top:6px">ผู้สังเกตการณ์</div>'+t.observers.map(function(m){return '<div class="mem" style="flex-wrap:wrap"><span>'+esc(m)+' <span class="tag">สังเกตการณ์</span></span>'+(adm&&S.db?'<input style="flex:1 1 100%" data-em="'+esc(m)+'" type="email" placeholder="อีเมล (เพื่อให้เข้าดูได้)" value="'+esc(emailOf(m))+'">':'')+'</div>'}).join(''):'')+'</div>';
   });
   html+='</div>';
   if(adm){
     var ex=(S.members||[]).filter(function(m){return m.is_admin&&lc(m.email)!==ADMIN_EMAIL&&lc(m.email)!==ADMIN2}).map(function(m){return m.email}).join('\n');
     if(S.db)html+='<div class="card"><b>ผู้ดูแลระบบเพิ่มเติม (QMR / DCC)</b> <span class="hint">อีเมลต่อบรรทัด — ผู้ดูแลแก้ไขได้ทุกทีม; '+ADMIN_EMAIL+' เป็นผู้ดูแลหลักเสมอ</span><textarea id="t-adm" style="min-height:60px;margin-top:6px">'+esc(S.draftAdm!=null?S.draftAdm:ex)+'</textarea></div>';
-    html+='<div class="row"><button class="btn pri" id="t-save">บันทึกทีม'+(S.db?'และสิทธิ์':'')+'</button><button class="btn" id="t-reset">คืนค่าข้อเสนอเริ่มต้น</button><span class="small muted" id="t-msg"></span></div>';
+    html+='<div class="row"><button class="btn" id="t-print">พิมพ์กำหนดการ FM-MR-24</button><button class="btn pri" id="t-save">บันทึกทีม'+(S.db?'และสิทธิ์':'')+'</button><button class="btn" id="t-reset">คืนค่าตาม FM-MR-24</button><span class="small muted" id="t-msg"></span></div>';
   }
   html+='</div>';
   $('v-teams').innerHTML=html;
@@ -482,14 +507,18 @@ function renderTeams(){
   Array.prototype.forEach.call($('v-teams').querySelectorAll('[data-em]'),function(i){i.oninput=function(){S.draft[i.dataset.em]=i.value}});
   if($('t-adm'))$('t-adm').oninput=function(){S.draftAdm=this.value};
   Array.prototype.forEach.call($('v-teams').querySelectorAll('[data-mv]'),function(sel){sel.onchange=function(){
-    var tm=getTeams(),name=sel.dataset.mv;
-    tm.forEach(function(t){t.members=t.members.filter(function(m){return m!==name})});
-    tm[+sel.value].members.push(name);S.teams=tm;renderTeams();}});
+    var tm=getTeams(),name=sel.dataset.mv,from=+sel.dataset.from;
+    tm[from].members=tm[from].members.filter(function(m){return m!==name});
+    if(tm[+sel.value].members.indexOf(name)<0)tm[+sel.value].members.push(name);S.teams=tm;renderTeams();}});
+  Array.prototype.forEach.call($('v-teams').querySelectorAll('[data-tf]'),function(inp){inp.oninput=function(){
+    var tm=getTeams(),t=tm[+inp.dataset.ti],f=inp.dataset.tf;
+    t[f]=f==='depts'?inp.value.split(/\n+/).map(function(x){return x.trim()}).filter(Boolean):inp.value;S.teams=tm;}});
+  $('t-print').onclick=function(){printHtml(schedPrint())};
   Array.prototype.forEach.call($('v-teams').querySelectorAll('[data-ts]'),function(cb){cb.onchange=function(){
     var tm=getTeams(),t=tm[+cb.dataset.ts];
     t.systems=(t.systems||[]).filter(function(s){return s!==cb.value});if(cb.checked)t.systems.push(cb.value);S.teams=tm;}});
   if($('t-match'))$('t-match').onclick=function(){
-    var tm=getTeams(),names=[];tm.forEach(function(t){names.push(t.lead);t.members.forEach(function(m){names.push(m)})});
+    var tm=getTeams(),names=[];tm.forEach(function(t){names.push(t.lead);t.members.forEach(function(m){names.push(m)});(t.observers||[]).forEach(function(m){names.push(m)})});
     var ok=0,bad=[];
     $('t-bulk').value.split(/\n+/).forEach(function(line){
       var m=line.match(/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+/);if(!m)return;
@@ -506,11 +535,17 @@ function renderTeams(){
       [[t.lead,'lead']].concat(t.members.map(function(m){return[m,'auditor']})).forEach(function(p){
         var e=lc(emailOf(p[0]));if(!e)return;
         if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){bad.push(p[0]);return}
-        rows[e]={email:e,name:p[0],team:i,role:p[1],is_admin:false};
+        var r=rows[e];
+        if(!r)rows[e]={email:e,name:p[0],team:i,teams:[i],role:p[1],is_admin:false};
+        else{if(r.teams.indexOf(i)<0)r.teams.push(i);if(p[1]==='lead'&&r.role!=='lead'){r.role='lead';r.team=i}}
       });
     });
+    tm.forEach(function(t){(t.observers||[]).forEach(function(m){
+      var e=lc(emailOf(m));if(!e)return;
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){bad.push(m);return}
+      if(!rows[e])rows[e]={email:e,name:m,team:null,teams:[],role:'observer',is_admin:false}});});
     var adm2=($('t-adm')?$('t-adm').value:'').split(/[\s,;]+/).map(lc).filter(function(e){return /@/.test(e)});
-    adm2.forEach(function(e){if(rows[e])rows[e].is_admin=true;else rows[e]={email:e,name:'ผู้ดูแล',team:null,role:'admin',is_admin:true}});
+    adm2.forEach(function(e){if(rows[e])rows[e].is_admin=true;else rows[e]={email:e,name:'ผู้ดูแล',team:null,teams:[],role:'admin',is_admin:true}});
     if(bad.length){msg.textContent='อีเมลไม่ถูกต้อง: '+bad.join(', ');return}
     var keep=Object.keys(rows),del=(S.members||[]).map(function(m){return lc(m.email)}).filter(function(e){return keep.indexOf(e)<0&&e!==ADMIN_EMAIL&&e!==ADMIN2});
     var list=keep.map(function(e){return rows[e]});
@@ -538,16 +573,34 @@ function exHtml(r){
   if(g)h+='<details class="det"><summary>Guidance / แนวทางเอกสาร</summary><div class="dt">'+esc(g)+'</div></details>';
   return h;
 }
+var SEVG='<details class="det" style="margin:0"><summary><b>แนวทางตัดสินระดับความรุนแรงของ NC (Major / Minor) → ใช้เป็นระดับใน CAR</b></summary><div class="dt">'+
+ '<p><span class="pill s-MA">MA · Major</span> ข้อบกพร่องร้ายแรง ซึ่งอาจส่งผลต่อการดำรงอยู่ของข้อกำหนด/มาตรฐาน หรือพบความไม่สอดคล้องจำนวนมาก หรือพนักงานส่วนใหญ่ไม่ปฏิบัติตามข้อกำหนด (นิยามตาม FM-MR-10 ของ KST)</p>'+
+ '<p><span class="pill s-MI">MI · Minor</span> ข้อบกพร่องเล็กน้อย จำนวนไม่มาก ไม่รุนแรง ยังปฏิบัติตามข้อกำหนด/มาตรฐานได้อย่างถูกต้อง (นิยามตาม FM-MR-10 ของ KST)</p>'+
+ '<p class="small muted" style="margin-bottom:4px"><b>เกณฑ์ช่วยตัดสิน (ตั้งต้นเพิ่มเติม — ปรับตามนโยบายของ KST ได้):</b></p><ul>'+
+ '<li>เป็น Major ถ้า: ไม่มีระบบ/ไม่มีการปฏิบัติตามข้อกำหนดนั้นเลย · กระทบความปลอดภัยอาหารโดยตรง (CCP/OPRP เกินขีดจำกัดแล้วไม่แก้ไข, การปนเปื้อน, สารตกค้าง) · ฝ่าฝืนกฎหมาย/ข้อกำหนดลูกค้า · พบซ้ำหลายจุดหรือเป็นระบบ · ข้อ Minor เดิมที่ปิดแล้วเกิดซ้ำ</li>'+
+ '<li>เป็น Minor ถ้า: เป็นเหตุการณ์เฉพาะจุด/บันทึกบางรายการขาดหรือไม่สมบูรณ์ แต่ระบบยังทำงานและไม่กระทบความปลอดภัยของผลิตภัณฑ์</li>'+
+ '<li>ถ้าไม่แน่ใจระหว่างสองระดับ ให้บันทึกหลักฐานและเสนอหัวหน้าทีม/QMR ตัดสิน</li></ul>'+
+ '<p class="small muted">ถ้าเพียงข้อสังเกต/โอกาสปรับปรุง ให้เลือก OBS (ออกเป็น CAR ระดับ OBSERVE) · ผลตรวจ NC ที่ยังไม่เลือกระดับ ระบบจะออก CAR เป็น Minor ชั่วคราวและเตือนที่หน้า “สรุปผล”</p></div></details>';
+function sevSuggest(r){
+  var t=(r.title||'')+' '+((r.ex&&r.ex.crit)||'');
+  return (r.ex&&r.ex.crit)||/CCP|OPRP|ขีดจำกัดวิกฤต|ขอบเขตวิกฤต|สารตกค้าง|ปนเปื้อน|ฟู้ดดีเฟนส์|food defense|recall|เรียกคืน/i.test(t)?'MA':'MI';
+}
+function sevBox(r,v){
+  if(v.r!=='NC')return '';
+  var sg=sevSuggest(r);
+  return '<div class="sevbox"><span class="small"><b>ระดับ CAR:</b></span> <div class="res" role="group" aria-label="ระดับความรุนแรง">'+['MA','MI'].map(function(x){return '<button data-s="'+x+'" aria-pressed="'+(v.s===x)+'">'+(x==='MA'?'Major':'Minor')+'</button>'}).join('')+'</div>'+
+   '<span class="small muted">ระบบแนะนำ: '+(sg==='MA'?'Major (ข้อวิกฤต CCP/OPRP/สารตกค้าง/การปนเปื้อน — โปรดตรวจซ้ำ)':'Minor (หากเป็นเฉพาะจุด)')+'</span></div>';
+}
 function curAudit(){return S.cur&&S.audits[S.cur]}
 function renderAudit(){
   var a=curAudit(),el=$('v-audit');
   if(!a){el.innerHTML='<div class="empty">ยังไม่ได้เลือกการตรวจ ไปที่ “ภาพรวม” เพื่อเปิดการตรวจใหม่หรือเลือกรายการเดิม</div>';return}
   var rows=rowsFor(a.systems),teams=getTeams(),t=teams[a.team||0]||{lead:'',members:[]},ed=canEdit(a);
   var c=stats(a);
-  var head='<div class="card"><div class="row" style="justify-content:space-between"><div><h2 style="font-size:19px">'+esc(a.name)+' · '+esc(a.dept)+'</h2><div class="small muted">FM-MR-10 · วันที่ตรวจ '+esc(thDate(a.date))+' · '+(a.systems||[]).map(function(s){return '<span class="tag">'+esc(SYS[s].name)+'</span>'}).join('')+'</div></div></div>'+
-    '<div class="small" style="margin-top:8px"><b>หัวหน้าทีม</b> '+esc(t.lead)+' · <b>ผู้ตรวจ</b> '+esc(t.members.join(', '))+'</div></div>';
+  var head='<div class="card"><div class="row" style="justify-content:space-between"><div><h2 style="font-size:19px">'+esc(a.name)+' · '+esc(a.dept)+'</h2><div class="small muted">FM-MR-10 · วันที่ตรวจ '+esc(thDate(a.date))+(a.time?' เวลา '+esc(a.time):'')+' · '+(a.systems||[]).map(function(s){return '<span class="tag">'+esc(SYS[s].name)+'</span>'}).join('')+'</div></div></div>'+
+    '<div class="small" style="margin-top:8px"><b>หัวหน้าทีม</b> '+esc(t.lead)+' · <b>ผู้ตรวจ</b> '+esc(t.members.join(', '))+(t.observers&&t.observers.length?' · <b>ผู้สังเกตการณ์</b> '+esc(t.observers.join(', ')):'')+'</div></div>';
   var bar='<div class="stick"><div class="prog"><i style="width:'+(c.total?Math.round(c.done/c.total*100):0)+'%"></i></div><span class="cnt" id="cnt">'+c.done+'/'+c.total+'</span>'+
-    '<span class="pill p-PASS" id="c-PASS">PASS '+c.PASS+'</span><span class="pill p-OBS" id="c-OBS">OBS '+c.OBS+'</span><span class="pill p-NC" id="c-NC">NC '+c.NC+'</span><span class="pill p-NA" id="c-NA">N/A '+c.NA+'</span>'+
+    '<span class="pill p-PASS" id="c-PASS">PASS '+c.PASS+'</span><span class="pill p-OBS" id="c-OBS">OBS '+c.OBS+'</span><span class="pill p-NC" id="c-NC">NC '+c.NC+(c.NC?' (Major '+c.MA+' · Minor '+c.MI+(c.NS?' · ยังไม่ระบุ '+c.NS:'')+')':'')+'</span><span class="pill p-NA" id="c-NA">N/A '+c.NA+'</span>'+
     '<select id="flt" style="width:auto"><option value="all">ทุกข้อ</option><option value="open">ยังไม่ตรวจ</option><option value="NC">เฉพาะ NC</option><option value="OBS">เฉพาะ OBS</option></select></div>';
   var body='',last='';
   rows.forEach(function(r){
@@ -557,10 +610,10 @@ function renderAudit(){
     body+='<div class="item" data-id="'+r.id+'"><div class="cl">'+r.qs.map(function(q){return '<span>'+esc(q.c)+'</span>'}).join('')+'</div><div><h4>'+esc(r.title)+'</h4>'+
       r.qs.map(function(q){return '<p class="q">'+(r.qs.length>1?'<span class="tag">'+SYS[q.s].short+' '+esc(q.c)+'</span>':'')+esc(q.q)+'</p>'+detHtml(q)}).join('')+exHtml(r)+'</div>'+
       '<div class="ctl"><div class="res" role="group" aria-label="ผลการตรวจ">'+['PASS','OBS','NC','NA'].map(function(x){return '<button data-r="'+x+'" aria-pressed="'+(v.r===x)+'"'+(ed?'':' disabled')+'>'+(x==='NA'?'N/A':x)+'</button>'}).join('')+'</div>'+
-      '<textarea placeholder="บันทึกหลักฐาน / ข้อสังเกต" aria-label="บันทึก"'+(ed?'':' readonly')+'>'+esc(v.n||'')+'</textarea></div></div>';
+      '<div class="sevslot">'+sevBox(r,v)+'</div><textarea placeholder="บันทึกหลักฐาน / ข้อสังเกต" aria-label="บันทึก"'+(ed?'':' readonly')+'>'+esc(v.n||'')+'</textarea></div></div>';
   });
-  el.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'+roBanner(a)+head+bar+'<div>'+(body||'<div class="empty">ไม่มีข้อที่ตรงกับตัวกรอง</div>')+'</div>'+
-   '<div class="note">คำจำกัดความ: PASS สอดคล้อง · OBS ข้อสังเกต/โอกาสปรับปรุง · NC ไม่สอดคล้อง (ออก CAR) · N/A ไม่เกี่ยวข้องกับพื้นที่ที่ตรวจ</div>'+
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'+roBanner(a)+head+'<div class="card" style="padding:10px 14px">'+SEVG+'</div>'+bar+'<div>'+(body||'<div class="empty">ไม่มีข้อที่ตรงกับตัวกรอง</div>')+'</div>'+
+   '<div class="note">คำจำกัดความ: PASS สอดคล้อง · OBS ข้อสังเกต/โอกาสปรับปรุง · NC ไม่สอดคล้อง (ออก CAR · เลือก Major/Minor) · N/A ไม่เกี่ยวข้องกับพื้นที่ที่ตรวจ</div>'+
    '<div class="row"><button class="btn pri" id="a-sum">ไปหน้าสรุปผล / ออก CAR</button>'+(ed?'<button class="btn" id="a-del">ลบการตรวจนี้</button>':'')+'<span class="small muted" id="a-conf"></span></div></div>';
   $('flt').value=S.filter;$('flt').onchange=function(){S.filter=this.value;renderAudit()};
   $('a-sum').onclick=function(){show('sum')};
@@ -570,11 +623,17 @@ function renderAudit(){
   if(!ed)return;
   Array.prototype.forEach.call(el.querySelectorAll('.item'),function(it){
     var id=it.dataset.id;
-    Array.prototype.forEach.call(it.querySelectorAll('.res button'),function(b){b.onclick=function(){
+    Array.prototype.forEach.call(it.querySelectorAll('.ctl>.res button'),function(b){b.onclick=function(){
       a.results=a.results||{};var cur=a.results[id]||{};
-      cur.r=(cur.r===b.dataset.r)?'':b.dataset.r;a.results[id]=cur;saveAudit(a);
-      Array.prototype.forEach.call(it.querySelectorAll('.res button'),function(x){x.setAttribute('aria-pressed',x.dataset.r===cur.r)});
-      refreshCounts(a);}});
+      cur.r=(cur.r===b.dataset.r)?'':b.dataset.r;if(cur.r!=='NC')delete cur.s;a.results[id]=cur;saveAudit(a);
+      Array.prototype.forEach.call(it.querySelectorAll('.ctl>.res button'),function(x){x.setAttribute('aria-pressed',x.dataset.r===cur.r)});
+      bindSev(it,id);refreshCounts(a);}});
+    var bindSev=function(it,id){
+      var rw=rows.filter(function(x){return x.id===id})[0],cur=a.results[id]||{};
+      it.querySelector('.sevslot').innerHTML=sevBox(rw,cur);
+      Array.prototype.forEach.call(it.querySelectorAll('.sevslot [data-s]'),function(sb){sb.onclick=function(){
+        var c2=a.results[id];c2.s=(c2.s===sb.dataset.s)?'':sb.dataset.s;saveAudit(a);bindSev(it,id);refreshCounts(a)}});
+    };bindSev(it,id);
     it.querySelector('textarea').oninput=function(){a.results=a.results||{};var cur=a.results[id]||{};cur.n=this.value;a.results[id]=cur;saveAudit(a)};
   });
 }
@@ -582,7 +641,7 @@ function refreshCounts(a){
   var c=stats(a),p=document.querySelector('.stick .prog i');if(!p)return;
   p.style.width=(c.total?Math.round(c.done/c.total*100):0)+'%';
   $('cnt').textContent=c.done+'/'+c.total;
-  $('c-PASS').textContent='PASS '+c.PASS;$('c-OBS').textContent='OBS '+c.OBS;$('c-NC').textContent='NC '+c.NC;$('c-NA').textContent='N/A '+c.NA;
+  $('c-PASS').textContent='PASS '+c.PASS;$('c-OBS').textContent='OBS '+c.OBS;$('c-NC').textContent='NC '+c.NC+(c.NC?' (Major '+c.MA+' · Minor '+c.MI+(c.NS?' · ยังไม่ระบุ '+c.NS:'')+')':'');$('c-NA').textContent='N/A '+c.NA;
 }
 
 /* ---------- CAR (FM-MR-07) ---------- */
@@ -612,11 +671,12 @@ function findings(a){
 function genCars(a){
   var year=+(a.date||today()).slice(0,4),t=getTeams()[a.team||0]||{lead:'',members:[]},n=0;
   findings(a).forEach(function(r){
-    var id='car_'+a.id+'_'+r.id;if(S.cars[id])return;
+    var id='car_'+a.id+'_'+r.id;
     var v=a.results[r.id],stds=[];
+    if(S.cars[id]){var ec=S.cars[id],ns=v.r==='NC'?(v.s==='MA'?'MA':'MI'):'OBS';if(ec.sev!==ns&&!(ec.cause&&ec.fix)&&(v.r!=='NC'||v.s)){ec.sev=ns;ec.sevSet=true;saveCar(ec,true)}return}
     r.qs.forEach(function(q){if(stds.indexOf(SYS[q.s].name)<0)stds.push(SYS[q.s].name)});
     var c={id:id,no:nextNo(year),auditId:a.id,rowId:r.id,auditName:a.name,auditDate:a.date,team:a.team,type:'CAR',
-      sev:v.r==='NC'?'MI':'OBS',std:stds.join(' / '),clause:r.qs.map(function(q){return q.c}).filter(function(x,i,ar){return ar.indexOf(x)===i}).join(' / '),title:r.title,
+      sev:v.r==='NC'?(v.s==='MA'?'MA':'MI'):'OBS',sevSet:v.r!=='NC'||!!v.s,std:stds.join(' / '),clause:r.qs.map(function(q){return q.c}).filter(function(x,i,ar){return ar.indexOf(x)===i}).join(' / '),title:r.title,
       dept:a.dept,owner:a.dept,area:a.dept,detail:v.n||('(ยังไม่ได้บันทึกรายละเอียด) '+r.title),evidence:'',issued:today(),
       auditors:[t.lead+' (หัวหน้าทีม)'].concat(t.members).join(', '),auditees:'',
       cause:'',fix:'',fixOwner:'',fixDue:'',prevent:'',prevOwner:'',prevDue:'',f1d:'',f1ok:'',f2d:'',f2ok:'',closeRes:'',closeDate:'',newNo:'',created:Date.now()};
@@ -762,17 +822,25 @@ function renderRep(){
   if(ed)Array.prototype.forEach.call(el.querySelectorAll('[data-r]'),function(i){i.oninput=function(){a.report=a.report||{};a.report[i.dataset.r]=i.value;saveAudit(a)}});
   $('r-print').onclick=function(){printHtml(repPrint(a))};
   $('r-csv').onclick=function(){
-    var out=[['FM-MR-27 รายงานการตรวจติดตามภายใน',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],['MA',d.cnt.MA],['MI',d.cnt.MI],['OBS',d.cnt.OBS],['รวม CAR',d.cars.length],[],['ข้อกำหนด','รายละเอียด','ระดับ','CAR No.']];
+    var out=[['FM-MR-27 รายงานการตรวจติดตามภายใน',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['เวลาที่เข้าตรวจ',a.time||''],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],['ผู้สังเกตการณ์',(t.observers||[]).join(', ')],['MA',d.cnt.MA],['MI',d.cnt.MI],['OBS',d.cnt.OBS],['รวม CAR',d.cars.length],[],['ข้อกำหนด','รายละเอียด','ระดับ','CAR No.']];
     d.cars.forEach(function(c){out.push([c.clause,c.detail,c.sev,c.no])});dl(csvRows(out),'FM-MR-27_'+a.name+'_'+a.dept+'.csv')};
+}
+function schedPrint(){
+  var teams=getTeams(),sy=function(k){return box(teams.some(function(t){return (t.systems||[]).indexOf(k)>=0}))};
+  return '<div class="pb"><div class="hd"><b>'+FM24.no+'</b><span>กำหนดการตรวจติดตามภายใน</span></div><h1>กำหนดการตรวจติดตามภายใน (Internal Audit Schedule) ครั้งที่ '+esc(FM24.round)+'</h1>'+
+   '<table><tr><td colspan="2">'+sy('f22')+' FSSC 22000 V.6 &nbsp; '+sy('bap')+' BAP SPS 6.0 (Core / Module) &nbsp; '+sy('q9')+' ISO 9001 &nbsp; '+sy('e14')+' ISO 14001</td></tr></table>'+
+   '<table style="margin-top:8px"><tr><th style="width:5%">ทีมที่</th><th>หัวหน้าทีม</th><th>ผู้ตรวจติดตาม</th><th>ผู้สังเกตการณ์</th><th style="width:11%">วันที่ตรวจ</th><th style="width:10%">เวลาที่เข้าตรวจ</th><th>หน่วยงานที่ตรวจ</th></tr>'+
+   teams.map(function(t,i){return '<tr><td style="text-align:center">'+(i+1)+'.</td><td>'+esc(t.lead)+'</td><td>'+t.members.map(esc).join('<br>')+'</td><td>'+(t.observers||[]).map(esc).join('<br>')+'</td><td>'+esc(t.dates||'')+'</td><td>'+esc(t.time||'')+'</td><td>'+(t.depts||[]).map(function(d,j){return (j+1)+'. '+esc(d)}).join('<br>')+'</td></tr>'}).join('')+'</table>'+
+   '<div class="sg"><div>จัดเตรียมโดย ................................<br>(Lead auditor, QMR, EMR)<br>วันที่ '+esc(FM24.prep)+'</div><div>ทบทวนและอนุมัติโดย ................................<br>(QMR, EMR, รองกรรมการผู้จัดการสายการผลิต)<br>วันที่ '+esc(FM24.prep)+'</div></div></div>';
 }
 function repPrint(a){
   var d=repData(a),r=d.rep,t=getTeams()[a.team||0]||{lead:'',members:[]};
   var sys=function(k){return box((a.systems||[]).indexOf(k)>=0)};
   return '<div class="pb"><div class="hd"><b>FM-MR-27</b><span>Issue No. : 03</span></div><h1>รายงานการตรวจติดตามคุณภาพภายใน (Internal Audit Report)</h1>'+
-   '<table><tr><td>การตรวจครั้งที่ / เลขที่: <b>'+esc(r.no||a.name)+'</b></td><td>วันที่ตรวจ: <b>'+esc(thDate(a.date))+'</b></td></tr>'+
+   '<table><tr><td>การตรวจครั้งที่ / เลขที่: <b>'+esc(r.no||a.name)+'</b></td><td>วันที่ตรวจ: <b>'+esc(thDate(a.date))+'</b>'+(a.time?' เวลา '+esc(a.time):'')+'</td></tr>'+
    '<tr><td colspan="2">ขอบเขต: '+sys('q9')+' ISO 9001:2015 &nbsp; '+sys('e14')+' ISO 14001:2015 &nbsp; '+sys('f22')+' FSSC 22000 &nbsp; '+sys('bap')+' BAP SPS 6.0</td></tr>'+
    '<tr><td colspan="2">หน่วยงานที่ถูกตรวจ: <b>'+esc(a.dept)+'</b> &nbsp; ผู้ถูกตรวจ: '+esc(r.auditees||'')+'</td></tr>'+
-   '<tr><td colspan="2">หัวหน้าทีมตรวจ: <b>'+esc(t.lead)+'</b> &nbsp; ผู้ตรวจ: '+esc(t.members.join(', '))+'</td></tr>'+
+   '<tr><td colspan="2">หัวหน้าทีมตรวจ: <b>'+esc(t.lead)+'</b> &nbsp; ผู้ตรวจ: '+esc(t.members.join(', '))+(t.observers&&t.observers.length?' &nbsp; ผู้สังเกตการณ์: '+esc(t.observers.join(', ')):'')+'</td></tr>'+
    '<tr><td colspan="2">วัตถุประสงค์/ขอบเขตการตรวจ: <div style="white-space:pre-wrap">'+esc(r.scope||'')+'</div></td></tr></table>'+
    '<table style="margin-top:8px"><tr><th style="width:12%">ข้อกำหนด</th><th>รายละเอียดข้อบกพร่อง</th><th style="width:5%">MA</th><th style="width:5%">MI</th><th style="width:6%">OBS</th><th style="width:11%">CAR No.</th></tr>'+
    (d.cars.length?d.cars.map(function(c){return '<tr><td>'+esc(c.clause)+'</td><td style="white-space:pre-wrap">'+esc(c.detail)+'</td><td style="text-align:center">'+(c.sev==='MA'?'✓':'')+'</td><td style="text-align:center">'+(c.sev==='MI'?'✓':'')+'</td><td style="text-align:center">'+(c.sev==='OBS'?'✓':'')+'</td><td>'+esc(c.no)+'</td></tr>'}).join(''):'<tr><td colspan="6" style="text-align:center">ไม่พบข้อบกพร่อง</td></tr>')+
@@ -784,9 +852,9 @@ function repPrint(a){
 /* ---------- สรุปผล ---------- */
 function csvOf(a){
   var rows=rowsFor(a.systems),teams=getTeams(),t=teams[a.team||0]||{lead:'',members:[]};
-  var out=[['FM-MR-10 รายการตรวจสอบ',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],[],['กลุ่ม','ข้อกำหนด','หัวข้อ','ผลตรวจ','บันทึก']];
+  var out=[['FM-MR-10 รายการตรวจสอบ',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['เวลาที่เข้าตรวจ',a.time||''],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],['ผู้สังเกตการณ์',(t.observers||[]).join(', ')],[],['กลุ่ม','ข้อกำหนด','หัวข้อ','ผลตรวจ','บันทึก']];
   rows.forEach(function(r){var v=(a.results||{})[r.id]||{};
-    out.push([r.group,r.qs.map(function(q){return SYS[q.s].short+' '+q.c}).join(' / '),r.title,v.r==='NA'?'N/A':(v.r||''),v.n||''])});
+    out.push([r.group,r.qs.map(function(q){return SYS[q.s].short+' '+q.c}).join(' / '),r.title,v.r==='NA'?'N/A':(v.r==='NC'?('NC'+(v.s==='MA'?' (Major)':v.s==='MI'?' (Minor)':'')):(v.r||'')),v.n||''])});
   return csvRows(out);
 }
 function renderSum(){
@@ -799,11 +867,13 @@ function renderSum(){
     var ap=k.PASS+k.OBS+k.NC;
     return '<tr><td><b>'+esc(SYS[s].name)+'</b></td><td>'+k.PASS+'</td><td>'+k.OBS+'</td><td>'+k.NC+'</td><td>'+k.NA+'</td><td>'+k.open+'</td><td>'+(ap?Math.round(k.PASS/ap*100)+'%':'–')+'</td></tr>'}).join('');
   var fs=findings(a),have=fs.filter(function(r){return S.cars['car_'+a.id+'_'+r.id]}).length;
+  if(ed)fs.forEach(function(r){var v=a.results[r.id],ec=S.cars['car_'+a.id+'_'+r.id];if(!ec)return;
+    var ns=v.r==='NC'?(v.s==='MA'?'MA':v.s==='MI'?'MI':ec.sev):'OBS';if(ec.sev!==ns&&!(ec.cause&&ec.fix)){ec.sev=ns;saveCar(ec,true)}});
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+roBanner(a)+'<div><h1 style="font-size:22px">สรุปผล · '+esc(a.name)+'</h1><p class="muted" style="margin:4px 0 0">'+esc(a.dept)+' · '+esc(thDate(a.date))+' · ตรวจแล้ว '+c.done+' จาก '+c.total+' ข้อ</p></div>'+
    '<div class="card scroll"><table><thead><tr><th>ระบบ</th><th>PASS</th><th>OBS</th><th>NC</th><th>N/A</th><th>ค้าง</th><th>สอดคล้อง</th></tr></thead><tbody>'+per+'</tbody></table>'+
    '<p class="small muted" style="margin:8px 0 0">สอดคล้อง = PASS ÷ (PASS + OBS + NC) ข้อร่วมระหว่างระบบนับให้ทุกระบบที่เลือก</p></div>'+
-   '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">ข้อพบ NC / OBS ('+fs.length+') · ออก CAR แล้ว '+have+'</h2>'+
-   (fs.length?fs.map(function(r){var v=a.results[r.id],car=S.cars['car_'+a.id+'_'+r.id];return '<div class="item" style="grid-template-columns:90px minmax(0,1fr)"><div><span class="pill p-'+v.r+'">'+v.r+'</span>'+(car?'<div class="small" style="margin-top:4px;font-family:var(--f-mono)">'+esc(car.no)+'</div>':'')+'</div><div><b>'+esc(r.title)+'</b> <span class="small muted">'+r.qs.map(function(q){return SYS[q.s].short+' '+esc(q.c)}).join(' · ')+'</span>'+(v.n?'<div class="note" style="margin-top:4px">'+esc(v.n)+'</div>':'')+'</div></div>'}).join(''):'<div class="empty">ยังไม่พบ NC / OBS</div>')+'</div>'+
+   '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">ข้อพบ NC / OBS ('+fs.length+') · ออก CAR แล้ว '+have+'</h2><div class="small" style="margin-bottom:8px"><span class="pill s-MA">Major '+c.MA+'</span> <span class="pill s-MI">Minor '+c.MI+'</span> <span class="pill s-OBS">OBS '+c.OBS+'</span>'+(c.NS?' <span class="pill p-NC">NC ยังไม่ระบุระดับ '+c.NS+'</span> <span class="muted">กลับไปหน้า Checklist เลือก Major/Minor ก่อนออก CAR</span>':'')+'</div>'+
+   (fs.length?fs.map(function(r){var v=a.results[r.id],car=S.cars['car_'+a.id+'_'+r.id];return '<div class="item" style="grid-template-columns:90px minmax(0,1fr)"><div><span class="pill p-'+v.r+'">'+v.r+'</span>'+(v.r==='NC'?'<div class="small" style="margin-top:4px">'+(v.s==='MA'?'<span class="pill s-MA">Major</span>':v.s==='MI'?'<span class="pill s-MI">Minor</span>':'<span class="pill p-NC">ยังไม่ระบุ</span>')+'</div>':'')+(car?'<div class="small" style="margin-top:4px;font-family:var(--f-mono)">'+esc(car.no)+'</div>':'')+'</div><div><b>'+esc(r.title)+'</b> <span class="small muted">'+r.qs.map(function(q){return SYS[q.s].short+' '+esc(q.c)}).join(' · ')+'</span>'+(v.n?'<div class="note" style="margin-top:4px">'+esc(v.n)+'</div>':'')+'</div></div>'}).join(''):'<div class="empty">ยังไม่พบ NC / OBS</div>')+'</div>'+
    '<div class="row">'+(ed&&fs.length&&have<fs.length?'<button class="btn pri" id="s-car">ออกใบ CAR จากข้อ NC/OBS ('+(fs.length-have)+' ใบ)</button>':'')+
    (have?'<button class="btn" id="s-cars">ดูใบ CAR ('+have+')</button>':'')+'<button class="btn" id="s-rep">รายงาน FM-MR-27</button><button class="btn" id="s-csv">บันทึกไฟล์ CSV (FM-MR-10)</button><button class="btn" id="s-copy">คัดลอกสรุป</button><span class="small muted" id="s-msg"></span></div></div>';
   if($('s-car'))$('s-car').onclick=function(){var n=genCars(a);S.carFilter=a.id;toast('ออกใบ CAR '+n+' ใบ — ไปเติมสาเหตุ/การแก้ไขที่แท็บ CAR');show('cars')};
@@ -811,7 +881,7 @@ function renderSum(){
   $('s-rep').onclick=function(){S.repId=a.id;show('rep')};
   $('s-csv').onclick=function(){dl(csvOf(a),'FM-MR-10_'+a.name+'_'+a.dept+'.csv')};
   $('s-copy').onclick=function(){
-    var txt=a.name+' · '+a.dept+' · '+thDate(a.date)+'\nPASS '+c.PASS+' | OBS '+c.OBS+' | NC '+c.NC+' | N/A '+c.NA+' | ค้าง '+c.open+'\n'+fs.map(function(r){var v=a.results[r.id];return '['+v.r+'] '+r.title+(v.n?' – '+v.n:'')}).join('\n');
+    var txt=a.name+' · '+a.dept+' · '+thDate(a.date)+'\nPASS '+c.PASS+' | OBS '+c.OBS+' | NC '+c.NC+' (Major '+c.MA+', Minor '+c.MI+') | N/A '+c.NA+' | ค้าง '+c.open+'\n'+fs.map(function(r){var v=a.results[r.id];return '['+v.r+(v.r==='NC'?(v.s==='MA'?' Major':v.s==='MI'?' Minor':' ?'):'')+'] '+r.title+(v.n?' – '+v.n:'')}).join('\n');
     var ok=function(){$('s-msg').textContent='คัดลอกแล้ว'};
     try{navigator.clipboard.writeText(txt).then(ok,function(){$('s-msg').textContent='คัดลอกไม่ได้ในมุมมองนี้'})}catch(e){$('s-msg').textContent='คัดลอกไม่ได้ในมุมมองนี้'}};
 }
@@ -820,7 +890,7 @@ function renderSum(){
 Array.prototype.forEach.call($('nav').children,function(b){b.onclick=function(){show(b.dataset.t)}});
 var loc=lsGet('kst-hub-audits');if(loc)S.audits=loc;
 var lcars=lsGet('kst-hub-cars');if(lcars)S.cars=lcars;
-var lt=lsGet('kst-hub-teams');if(lt)S.teams=lt;
+var lt=lsGet('kst-hub-teams');if(lt&&lt.ver>=3&&lt.teams)S.teams=normTeams(lt.teams);
 computeMe();
 show('home');
 /* ---------- Supabase backend ---------- */
@@ -864,7 +934,7 @@ function attach(sb,db){
     else if(S.tab==='cars'&&!typing()&&!Object.keys(timers).length)renderCars();
   });
   db.doc('config/teams').onSnapshot(function(s){
-    if(s.exists&&s.data()&&s.data().teams){S.teams=s.data().teams;if(S.tab==='teams'&&!typing())renderTeams()}
+    if(s.exists&&s.data()&&s.data().teams&&s.data().ver>=3){S.teams=normTeams(s.data().teams);if(S.tab==='teams'&&!typing())renderTeams()}
   });
   var loadM=function(){sb.from('members').select('*').then(function(r){
     if(r.error)return;S.members=r.data||[];computeMe();whoRender();
