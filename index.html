@@ -432,11 +432,11 @@ function renderHome(){
 }
 
 /* ---------- สิทธิ์ ---------- */
-var ADMIN_EMAIL='torsak.ar@kst-hatyai.com';
+var ADMIN_EMAIL='torsak.ar@kst-hatyai.com',ADMIN2='kitar.sa@ksthatyai365.onmicrosoft.com';
 function lc(s){return String(s||'').trim().toLowerCase()}
 function computeMe(){
   var em=lc(S.email),row=(S.members||[]).filter(function(m){return lc(m.email)===em})[0];
-  S.me={email:S.email||'',admin:!S.db||em===ADMIN_EMAIL||!!(row&&row.is_admin),team:row&&row.team!=null?+row.team:null,name:row?row.name:'',role:row?row.role:''};
+  S.me={email:S.email||'',admin:!S.db||em===ADMIN_EMAIL||em===ADMIN2||!!(row&&row.is_admin),team:row&&row.team!=null?+row.team:null,name:row?row.name:'',role:row?row.role:''};
 }
 function canTeam(i){return !S.db||S.me.admin||(S.me.team!=null&&S.me.team===+i)}
 function canEdit(x){return !S.db||S.me.admin||(S.me.team!=null&&x&&x.team!=null&&S.me.team===+x.team)}
@@ -472,7 +472,7 @@ function renderTeams(){
   });
   html+='</div>';
   if(adm){
-    var ex=(S.members||[]).filter(function(m){return m.is_admin&&lc(m.email)!==ADMIN_EMAIL}).map(function(m){return m.email}).join('\n');
+    var ex=(S.members||[]).filter(function(m){return m.is_admin&&lc(m.email)!==ADMIN_EMAIL&&lc(m.email)!==ADMIN2}).map(function(m){return m.email}).join('\n');
     if(S.db)html+='<div class="card"><b>ผู้ดูแลระบบเพิ่มเติม (QMR / DCC)</b> <span class="hint">อีเมลต่อบรรทัด — ผู้ดูแลแก้ไขได้ทุกทีม; '+ADMIN_EMAIL+' เป็นผู้ดูแลหลักเสมอ</span><textarea id="t-adm" style="min-height:60px;margin-top:6px">'+esc(S.draftAdm!=null?S.draftAdm:ex)+'</textarea></div>';
     html+='<div class="row"><button class="btn pri" id="t-save">บันทึกทีม'+(S.db?'และสิทธิ์':'')+'</button><button class="btn" id="t-reset">คืนค่าข้อเสนอเริ่มต้น</button><span class="small muted" id="t-msg"></span></div>';
   }
@@ -512,7 +512,7 @@ function renderTeams(){
     var adm2=($('t-adm')?$('t-adm').value:'').split(/[\s,;]+/).map(lc).filter(function(e){return /@/.test(e)});
     adm2.forEach(function(e){if(rows[e])rows[e].is_admin=true;else rows[e]={email:e,name:'ผู้ดูแล',team:null,role:'admin',is_admin:true}});
     if(bad.length){msg.textContent='อีเมลไม่ถูกต้อง: '+bad.join(', ');return}
-    var keep=Object.keys(rows),del=(S.members||[]).map(function(m){return lc(m.email)}).filter(function(e){return keep.indexOf(e)<0&&e!==ADMIN_EMAIL});
+    var keep=Object.keys(rows),del=(S.members||[]).map(function(m){return lc(m.email)}).filter(function(e){return keep.indexOf(e)<0&&e!==ADMIN_EMAIL&&e!==ADMIN2});
     var list=keep.map(function(e){return rows[e]});
     msg.textContent='กำลังบันทึก…';
     (list.length?S.sb.from('members').upsert(list):Promise.resolve({})).then(function(r){
@@ -884,7 +884,7 @@ function loginView(sb,msg){
      '<div class="small"><a href="#" id="lg-sw">'+(mode==='in'?'ยังไม่เคยเข้าใช้ — ลงทะเบียนครั้งแรก':'มีบัญชีแล้ว — เข้าสู่ระบบ')+'</a>'+(mode==='in'?' · <a href="#" id="lg-fg">ลืมรหัสผ่าน</a>':'')+'</div><div class="small" id="lg-msg">'+esc(msg||'')+'</div>';
     var g=function(i){return document.getElementById(i)},say=function(t){g('lg-msg').textContent=t};
     var mail=function(){var m=g('lg-mail').value.trim().toLowerCase();if(m&&m.indexOf('@')<0)m+='@kst-hatyai.com';
-      if(!/^[^@\s]+@kst-hatyai\.com$/.test(m)){say('ใช้ได้เฉพาะอีเมลบริษัท @kst-hatyai.com');return null}return m};
+      if(!/^[^@\s]+@kst-hatyai\.com$/.test(m)&&m!==ADMIN2){say('ใช้ได้เฉพาะอีเมลบริษัท @kst-hatyai.com');return null}return m};
     g('lg-sw').onclick=function(e){e.preventDefault();mode=mode==='in'?'up':'in';msg='';draw()};
     if(g('lg-fg'))g('lg-fg').onclick=function(e){e.preventDefault();var m=mail();if(!m)return;
       sb.auth.resetPasswordForEmail(m,{redirectTo:location.href.split('#')[0]}).then(function(r){say(r.error?'ส่งไม่ได้: '+r.error.message:'ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ '+m+' แล้ว')})};
