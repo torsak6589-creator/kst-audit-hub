@@ -126,7 +126,7 @@ body{margin:0}
 
 
 <header class="top"><div class="wrap bar">
-  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0</span></div>
+  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0 · GMP · HACCP · v13.10.3</span></div>
   <nav role="tablist" id="nav">
     <button role="tab" data-t="home" aria-selected="true">ภาพรวม</button>
     <button role="tab" data-t="teams" aria-selected="false">ทีมตรวจ</button>
@@ -522,8 +522,8 @@ function renderHome(){
     '<p class="note" style="margin:12px 0">ผู้ตรวจต้องไม่ตรวจงานของตนเอง (ISO 9.2) เลือกทีมที่ไม่ได้สังกัดหน่วยงานที่ถูกตรวจ</p>'+
     ''+(teamOpts?'<button class="btn pri" id="n-go">เริ่มตรวจ</button>':'<span class="ro">คุณยังไม่ได้อยู่ในทีมตรวจ — ดูผลอย่างเดียว (ขอให้ QMR เพิ่มอีเมลของคุณในหน้า “ทีมตรวจ”)</span>')+' <span class="small muted" id="n-err"></span><p class="small muted" id="n-hint" style="margin:8px 0 0"></p></div>'+
    '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">การตรวจทั้งหมด</h2>'+
-    (list.length?'<div class="scroll"><table><thead><tr><th>ชื่อ</th><th>หน่วยงาน</th><th>วันที่</th><th>ระบบ</th><th>ความคืบหน้า</th><th>ข้อบกพร่อง</th><th></th></tr></thead><tbody>'+
-     list.map(function(a){var c=stats(a);return '<tr><td><b>'+esc(a.name)+'</b><div class="small muted">ทีม '+((a.team||0)+1)+' · '+esc((teams[a.team||0]||{}).lead||'')+'</div></td><td>'+esc(a.dept)+'</td><td>'+esc(thDate(a.date))+(a.time?'<div class="small muted">'+esc(a.time)+'</div>':'')+'</td><td>'+(a.systems||[]).map(function(s){return '<span class="tag">'+SYS[s].short+'</span>'}).join('')+'</td><td class="cnt">'+c.done+'/'+c.total+'</td><td>'+((c.CR+c.MA+c.MI)?(c.CR?'<span class="pill p-CR">Cr '+c.CR+'</span> ':'')+(c.MA?'<span class="pill p-MA">Ma '+c.MA+'</span> ':'')+(c.MI?'<span class="pill p-MI">Mi '+c.MI+'</span>':''):'–')+'</td><td><button class="btn sm" data-open="'+a.id+'">เปิด</button></td></tr>'}).join('')+'</tbody></table></div>'
+    (list.length?'<div class="row" style="margin-bottom:8px"><button class="btn sm" id="l-del" disabled>ลบที่เลือก (0)</button><span class="small muted">ติ๊กช่องหน้ารายการเพื่อเลือกที่จะลบ</span></div><div class="scroll"><table><thead><tr><th style="width:28px"><input type="checkbox" id="l-all" aria-label="เลือกทั้งหมด"></th><th>ชื่อ</th><th>หน่วยงาน</th><th>วันที่</th><th>ระบบ</th><th>ความคืบหน้า</th><th>ข้อบกพร่อง</th><th></th></tr></thead><tbody>'+
+     list.map(function(a){var c=stats(a);return '<tr><td>'+(canEdit(a)?'<input type="checkbox" class="l-sel" value="'+a.id+'" aria-label="เลือก '+esc(a.name)+'">':'')+'</td><td><b>'+esc(a.name)+'</b><div class="small muted">ทีม '+((a.team||0)+1)+' · '+esc((teams[a.team||0]||{}).lead||'')+'</div></td><td>'+esc(a.dept)+'</td><td>'+esc(thDate(a.date))+(a.time?'<div class="small muted">'+esc(a.time)+'</div>':'')+'</td><td>'+(a.systems||[]).map(function(s){return '<span class="tag">'+SYS[s].short+'</span>'}).join('')+'</td><td class="cnt">'+c.done+'/'+c.total+'</td><td>'+((c.CR+c.MA+c.MI)?(c.CR?'<span class="pill p-CR">Cr '+c.CR+'</span> ':'')+(c.MA?'<span class="pill p-MA">Ma '+c.MA+'</span> ':'')+(c.MI?'<span class="pill p-MI">Mi '+c.MI+'</span>':''):'–')+'</td><td><button class="btn sm" data-open="'+a.id+'">เปิด</button></td></tr>'}).join('')+'</tbody></table></div>'
      :'<div class="empty">ยังไม่มีการตรวจ เลือกทีมและระบบด้านบน แล้วกด “เริ่มตรวจ” รายการจะแสดงที่นี่ให้ทุกคนในองค์กรเห็นตรงกัน</div>')+
    '</div>'+
    '<p class="small muted" id="modeNote"></p></div>';
@@ -548,6 +548,15 @@ function renderHome(){
     var a={id:uid(),name:$('n-name').value.trim()||('IQA '+n+'/2569'),dept:$('n-dept').value.trim(),date:$('n-date').value,time:$('n-time').value.trim(),team:+sel.value,systems:sys,results:{},created:Date.now()};
     S.audits[a.id]=a;S.cur=a.id;saveAudit(a,true);S.filter='all';show('audit');
   };
+  var selBoxes=function(){return Array.prototype.slice.call($('v-home').querySelectorAll('.l-sel'))};
+  var selUpd=function(){var n=selBoxes().filter(function(x){return x.checked}).length,b=$('l-del');if(!b)return;b.disabled=!n;b.dataset.arm='';b.textContent='ลบที่เลือก ('+n+')'};
+  if($('l-del')){
+    selBoxes().forEach(function(x){x.onchange=selUpd});
+    $('l-all').onchange=function(){var v=this.checked;selBoxes().forEach(function(x){x.checked=v});selUpd()};
+    $('l-del').onclick=function(){var ids=selBoxes().filter(function(x){return x.checked}).map(function(x){return x.value});if(!ids.length)return;
+      if(this.dataset.arm!=='1'){this.dataset.arm='1';this.textContent='กดอีกครั้งเพื่อยืนยันลบ '+ids.length+' รายการ';return}
+      ids.forEach(removeAudit);if(ids.indexOf(S.cur)>=0)S.cur=null;toast('ลบแล้ว '+ids.length+' รายการ');renderHome()};
+  }
   Array.prototype.forEach.call($('v-home').querySelectorAll('[data-open]'),function(b){b.onclick=function(){S.cur=b.dataset.open;S.filter='all';show('audit')}});
 }
 
