@@ -827,10 +827,20 @@ function renderRep(){
    '<div class="card scroll"><b>ผลการตรวจ: CR '+d.cnt.CR+' · MA '+d.cnt.MA+' · MI '+d.cnt.MI+' · OBS '+d.cnt.OBS+' · รวม CAR '+d.cars.length+' ใบ</b>'+
     '<table style="margin-top:8px"><thead><tr><th>ข้อกำหนด</th><th>รายละเอียดข้อบกพร่อง</th><th>CR</th><th>MA</th><th>MI</th><th>OBS</th><th>CAR No.</th></tr></thead><tbody>'+
     (d.cars.length?d.cars.map(function(c){return '<tr><td>'+esc(c.clause)+'</td><td>'+esc(c.detail)+'</td><td>'+(c.sev==='CR'?'✓':'')+'</td><td>'+(c.sev==='MA'?'✓':'')+'</td><td>'+(c.sev==='MI'?'✓':'')+'</td><td>'+(c.sev==='OBS'?'✓':'')+'</td><td>'+esc(c.no)+'</td></tr>'}).join(''):'<tr><td colspan="7" class="muted">ยังไม่มีใบ CAR</td></tr>')+'</tbody></table></div>'+
-   '<div class="row"><button class="btn pri" id="r-print">พิมพ์ / บันทึก PDF</button><button class="btn" id="r-csv">ส่งออก CSV</button><span class="hint">รูปแบบหน้ารายงานจัดตามโครงของ FM-MR-27 (R03) — ควรเทียบกับฟอร์มจริงก่อนใช้เป็นเอกสารควบคุม</span></div></div>';
+   '<div class="row"><button class="btn pri" id="r-print">พิมพ์ / บันทึก PDF</button><button class="btn" id="r-csv">ส่งออก CSV</button>'+(ed?'<button class="btn" id="r-clr1">ล้างรายงานนี้</button><button class="btn" id="r-clrt">ล้างรายงานทั้งทีม '+((a.team||0)+1)+'</button>':'')+'<span class="hint">รูปแบบหน้ารายงานจัดตามโครงของ FM-MR-27 (R03) — ควรเทียบกับฟอร์มจริงก่อนใช้เป็นเอกสารควบคุม</span></div></div>';
   $('r-a').onchange=function(){S.repId=this.value;renderRep()};
   if(ed)Array.prototype.forEach.call(el.querySelectorAll('[data-r]'),function(i){i.oninput=function(){a.report=a.report||{};a.report[i.dataset.r]=i.value;saveAudit(a)}});
   $('r-print').onclick=function(){printHtml(repPrint(a))};
+  /* ล้างข้อความรายงาน FM-MR-27 (เลขที่, ผู้ถูกตรวจ, ขอบเขต, จุดเด่น, สรุป) — ไม่ลบผลตรวจและใบ CAR */
+  var clr=function(btn,label,targets){
+    if(!btn)return;btn.onclick=function(){
+      if(btn.dataset.arm!=='1'){btn.dataset.arm='1';btn.textContent='กดอีกครั้งเพื่อยืนยัน ('+targets.length+' การตรวจ)';
+        setTimeout(function(){btn.dataset.arm='';btn.textContent=label},4000);return}
+      targets.forEach(function(x){if(canEdit(x)){x.report={};saveAudit(x)}});
+      toast('ล้างรายงานแล้ว '+targets.length+' การตรวจ (ผลตรวจและใบ CAR ยังอยู่)');renderRep();}};
+  var teamAudits=Object.keys(S.audits).map(function(k){return S.audits[k]}).filter(function(x){return (x.team||0)===(a.team||0)});
+  clr($('r-clr1'),'ล้างรายงานนี้',[a]);
+  clr($('r-clrt'),'ล้างรายงานทั้งทีม '+((a.team||0)+1),teamAudits);
   $('r-csv').onclick=function(){
     var out=[['FM-MR-27 รายงานการตรวจติดตามภายใน',a.name],['หน่วยงาน',a.dept],['วันที่ตรวจ',thDate(a.date)],['เวลาที่เข้าตรวจ',a.time||''],['หัวหน้าทีม',t.lead],['ผู้ตรวจ',t.members.join(', ')],['ผู้สังเกตการณ์',(t.observers||[]).join(', ')],['CR',d.cnt.CR],['MA',d.cnt.MA],['MI',d.cnt.MI],['OBS',d.cnt.OBS],['รวม CAR',d.cars.length],[],['ข้อกำหนด','รายละเอียด','ระดับ','CAR No.']];
     d.cars.forEach(function(c){out.push([c.clause,c.detail,c.sev,c.no])});dl(csvRows(out),'FM-MR-27_'+a.name+'_'+a.dept+'.csv')};
