@@ -513,6 +513,7 @@ function renderHome(){
    '<div class="card"><h2 style="font-size:17px;margin-bottom:12px">เปิดการตรวจใหม่</h2><div class="form">'+
     '<label class="f">ชื่อการตรวจ<input id="n-name" value="IQA '+n+'/2569"></label>'+
     '<label class="f">หน่วยงานที่ถูกตรวจ<input id="n-dept" list="deptlist" placeholder="เช่น ฝ่ายผลิต (PD)"><datalist id="deptlist">'+DEPTS.map(function(d){return '<option value="'+esc(d)+'">'}).join('')+'</datalist></label>'+
+    '<div class="f" style="grid-column:1/-1"><span class="small muted">ฝ่ายตามแผนของทีมนี้ (ติ๊กเพื่อรวมในการตรวจ)</span><div class="chk" id="n-dchk" style="margin-top:6px"></div></div>'+
     '<label class="f">วันที่ตรวจ<input id="n-date" type="date" value="'+today+'"></label>'+
     '<label class="f">เวลาที่เข้าตรวจ<input id="n-time" placeholder="เช่น 09.00-16.00 น."></label>'+
     '<label class="f">ทีมตรวจ<select id="n-team">'+teamOpts+'</select></label></div>'+
@@ -533,7 +534,10 @@ function renderHome(){
   var setSched=function(){var t=teams[+sel.value]||{};var dl=$('deptlist');
     dl.innerHTML=(t.depts||[]).concat(DEPTS).map(function(d){return '<option value="'+esc(d)+'">'}).join('');
     var f=function(id,k,v){var e=$(id);if(!e.value||e.value===auto[k]){e.value=v;auto[k]=v}};
-    f('n-dept','dept',(t.depts||[])[0]||'');f('n-date','date',firstDate(t.dates)||today);f('n-time','time',t.time||'');
+    var dc=$('n-dchk');dc.innerHTML=(t.depts||[]).map(function(d){return '<label><input type="checkbox" value="'+esc(d)+'" checked> '+esc(d)+'</label>'}).join('')||'<span class="small muted">–</span>';
+    var sync=function(){var v=Array.prototype.filter.call(dc.querySelectorAll('input'),function(i){return i.checked}).map(function(i){return i.value}).join(' / ');$('n-dept').value=v;auto.dept=v};
+    Array.prototype.forEach.call(dc.querySelectorAll('input'),function(i){i.onchange=sync});
+    var dv=(t.depts||[]).join(' / ');f('n-dept','dept',dv);f('n-date','date',firstDate(t.dates)||today);f('n-time','time',t.time||'');
     $('n-hint').textContent=t.dates?('กำหนดการตามแผน FM-MR-24: '+t.dates+' · '+(t.time||'')+' · หน่วยงาน: '+(t.depts||[]).join(' / ')):'';};
   sel.onchange=function(){setScope();setSched()};setScope();setSched();
   $('n-go').onclick=function(){
