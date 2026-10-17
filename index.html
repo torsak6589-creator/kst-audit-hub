@@ -128,7 +128,7 @@ body{margin:0}
 
 
 <header class="top"><div class="wrap bar">
-  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0 · GMP · HACCP · v13.11.0</span></div>
+  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0 · GMP · HACCP · v13.11.1</span></div>
   <nav role="tablist" id="nav">
     <button role="tab" data-t="home" aria-selected="true">ภาพรวม</button>
     <button role="tab" data-t="teams" aria-selected="false">ทีมตรวจ</button>
@@ -685,7 +685,9 @@ function renderTeams(){
     html+='<div class="card"><h2 style="font-size:17px;margin-bottom:6px">รหัสผ่านสิทธิ์แก้ไข</h2><p class="small muted" style="margin:0 0 10px">ทุกคนเปิดดูได้ แต่การเปิดการตรวจ/บันทึกผล/แก้รายงานต้องใช้รหัสของทีมนั้น — สร้างรหัสแล้วแจ้งหัวหน้าทีม หัวหน้าทีมแจกให้ลูกทีมที่ช่วยตรวจ (รหัสแสดงครั้งเดียว ถ้าลืมให้สร้างใหม่)</p>'+
      '<div class="scroll"><table><thead><tr><th>ทีม</th><th>หัวหน้าทีม</th><th>สถานะ</th><th></th><th>รหัสใหม่</th></tr></thead><tbody>'+
      teams.map(function(t,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(t.lead)+'</td><td>'+((ACC.teams||{})[i]?'<span class="pill p-PASS">ตั้งแล้ว</span>':'<span class="pill p-MI">ยังไม่ตั้ง</span>')+'</td><td><button class="btn sm" data-gen="'+i+'">สร้างรหัสใหม่</button></td><td><code id="pw-out-'+i+'" style="font-size:15px"></code></td></tr>'}).join('')+
-     '</tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" id="pw-all">สร้างรหัสทุกทีม</button><span class="small muted">·</span><label class="small">รหัส QMR ใหม่ <input id="pw-adm" type="password" style="width:150px;display:inline-block"></label><button class="btn sm" id="pw-adm-go">เปลี่ยนรหัส QMR</button></div></div>';
+     '</tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" id="pw-all">สร้างรหัสทุกทีม</button>'+
+     '<button class="btn pri" id="pw-print">พิมพ์ใบแจ้งรหัส (PDF)</button><button class="btn" id="pw-csv">ดาวน์โหลด CSV</button><button class="btn" id="pw-copy">คัดลอกข้อความแจ้งทีม</button><span class="small muted" id="pw-note"></span>'+
+     '</div><div class="row" style="margin-top:8px"><span class="small muted">·</span><label class="small">รหัส QMR ใหม่ <input id="pw-adm" type="password" style="width:150px;display:inline-block"></label><button class="btn sm" id="pw-adm-go">เปลี่ยนรหัส QMR</button></div></div>';
   }
   html+='<div class="teams">';
   teams.forEach(function(t,i){
@@ -708,15 +710,33 @@ function renderTeams(){
   html+='</div>';
   $('v-teams').innerHTML=html;
   if(OPEN&&adm){
-    var gen=function(i){var c=genCode();ACC.teams=ACC.teams||{};ACC.teams[i]=hpw(c);return c};
+    var gen=function(i){var c=genCode();ACC.teams=ACC.teams||{};ACC.teams[i]=hpw(c);S.codes=S.codes||{};S.codes[i]=c;return c};
     Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(b){b.onclick=function(){var i=+b.dataset.gen,c=gen(i);saveAcc();
       Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(x){});var o=$('pw-out-'+i);o.textContent=c;
-      var st=b.parentNode.previousElementSibling;st.innerHTML='<span class="pill p-PASS">ตั้งแล้ว</span>';toast('รหัสทีม '+(i+1)+': '+c+' — จดไว้แจ้งหัวหน้าทีม')}});
+      var st=b.parentNode.previousElementSibling;st.innerHTML='<span class="pill p-PASS">ตั้งแล้ว</span>';toast('รหัสทีม '+(i+1)+': '+c+' — จดไว้แจ้งหัวหน้าทีม');$('pw-note').textContent='พร้อมส่งออก '+picked().length+' ทีม'}});
     $('pw-all').onclick=function(){if(this.dataset.arm!=='1'){this.dataset.arm='1';this.textContent='กดอีกครั้ง — รหัสเดิมทุกทีมจะใช้ไม่ได้';return}
       var out=teams.map(function(t,i){var c=gen(i);$('pw-out-'+i).textContent=c;return 'ทีม '+(i+1)+' '+t.lead+': '+c});saveAcc();
       Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(b){b.parentNode.previousElementSibling.innerHTML='<span class="pill p-PASS">ตั้งแล้ว</span>'});
-      this.dataset.arm='';this.textContent='สร้างรหัสทุกทีม';
+      this.dataset.arm='';this.textContent='สร้างรหัสทุกทีม';$('pw-note').textContent='พร้อมส่งออก '+picked().length+' ทีม';
       try{navigator.clipboard.writeText(out.join('\n'));toast('สร้างแล้ว และคัดลอกรายการรหัสทุกทีมไว้ในคลิปบอร์ด')}catch(e){toast('สร้างรหัสทุกทีมแล้ว')}};
+    Object.keys(S.codes||{}).forEach(function(i){var o=$('pw-out-'+i);if(o)o.textContent=S.codes[i]});
+    var URL0=location.href.split(/[?#]/)[0];
+    var picked=function(){var c=S.codes||{};return teams.map(function(t,i){return{i:i,t:t,c:c[i]}}).filter(function(x){return x.c})};
+    var need=function(){var l=picked();if(!l.length){toast('ยังไม่มีรหัสในรอบนี้ — กด “สร้างรหัสทุกทีม” หรือ “สร้างรหัสใหม่” ก่อน (ระบบเก็บรหัสแบบเข้ารหัส จึงแสดงย้อนหลังไม่ได้)');return null}return l};
+    $('pw-note').textContent=picked().length?('พร้อมส่งออก '+picked().length+' ทีม'):'ส่งออกได้เฉพาะรหัสที่สร้างในหน้านี้ (ก่อนรีเฟรช)';
+    var msg=function(x){return 'แจ้งรหัสเข้าแก้ไข KST Audit Hub\nทีม '+(x.i+1)+' · หัวหน้าทีม '+x.t.lead+'\nรหัสทีม: '+x.c+'\nวันที่ตรวจ: '+(x.t.dates||'')+' เวลา '+(x.t.time||'')+'\nหน่วยงาน: '+(x.t.depts||[]).join(', ')+'\nลิงก์: '+URL0+'\nวิธีใช้: เลือกทีม '+(x.i+1)+' ใส่รหัส แล้วกด “เริ่มตรวจ” (ลูกทีมใส่รหัสเดียวกันในแถบ “อ่านอย่างเดียว” เพื่อช่วยบันทึก) — ห้ามส่งต่อนอกทีม'};
+    $('pw-copy').onclick=function(){var l=need();if(!l)return;var t=l.map(msg).join('\n\n----------\n\n');
+      try{navigator.clipboard.writeText(t).then(function(){toast('คัดลอกข้อความ '+l.length+' ทีมแล้ว — วางใน LINE/อีเมลได้')},function(){prompt('คัดลอกข้อความนี้',t)})}catch(e){prompt('คัดลอกข้อความนี้',t)}};
+    $('pw-csv').onclick=function(){var l=need();if(!l)return;
+      dl(csvRows([['ทีม','หัวหน้าทีม','ผู้ตรวจติดตาม','ผู้สังเกตการณ์','วันที่ตรวจ','เวลา','หน่วยงานที่ตรวจ','รหัสทีม','ลิงก์']].concat(l.map(function(x){return[x.i+1,x.t.lead,(x.t.members||[]).join(', '),(x.t.observers||[]).join(', '),x.t.dates,x.t.time,(x.t.depts||[]).join(' / '),x.c,URL0]}))),'KST-Audit-Hub_รหัสทีม_'+FM24.round.replace('/','-')+'.csv')};
+    $('pw-print').onclick=function(){var l=need();if(!l)return;
+      printHtml('<style>.slip{border:1.5px dashed #555;border-radius:8px;padding:14px 18px;margin:0 0 14px;page-break-inside:avoid;font-size:13.5px}.slip h3{margin:0 0 6px;font-size:16px}.slip .code{font:700 26px/1.2 monospace;letter-spacing:4px;border:2px solid #111;display:inline-block;padding:4px 14px;margin:6px 0}.slip td{padding:2px 8px 2px 0;vertical-align:top}</style>'+
+        '<div style="text-align:center;margin-bottom:10px"><b style="font-size:17px">ใบแจ้งรหัสเข้าแก้ไข KST Audit Hub</b><div class="small">การตรวจติดตามภายใน ครั้งที่ '+esc(FM24.round)+' · '+esc(FM24.no)+' · ตัดตามรอยประเพื่อแจกหัวหน้าทีม</div></div>'+
+        l.map(function(x){return '<div class="slip"><h3>ทีม '+(x.i+1)+' · หัวหน้าทีม '+esc(x.t.lead)+'</h3><table>'+
+          '<tr><td>ผู้ตรวจติดตาม</td><td>'+esc((x.t.members||[]).join(', '))+'</td></tr>'+((x.t.observers||[]).length?'<tr><td>ผู้สังเกตการณ์</td><td>'+esc(x.t.observers.join(', '))+'</td></tr>':'')+
+          '<tr><td>วันที่ / เวลา</td><td>'+esc(x.t.dates||'')+' · '+esc(x.t.time||'')+'</td></tr><tr><td>หน่วยงานที่ตรวจ</td><td>'+esc((x.t.depts||[]).join(', '))+'</td></tr></table>'+
+          '<div>รหัสทีม</div><div class="code">'+esc(x.c)+'</div>'+
+          '<div class="small">ลิงก์: '+esc(URL0)+'<br>วิธีใช้: เลือกทีม '+(x.i+1)+' ใส่รหัส แล้วกด “เริ่มตรวจ” · ลูกทีมที่ช่วยตรวจใส่รหัสเดียวกันในแถบ “อ่านอย่างเดียว” ของรายงานทีม · 1 ทีม/หน่วยงาน = 1 รายงาน · ห้ามส่งต่อนอกทีม</div></div>'}).join(''))};
     $('pw-adm-go').onclick=function(){var v=$('pw-adm').value.trim();if(v.length<6){toast('รหัส QMR ต้องยาวอย่างน้อย 6 ตัวอักษร');return}ACC.admin=hpw(v);saveAcc();$('pw-adm').value='';toast('เปลี่ยนรหัส QMR แล้ว')};
   }
   if(!adm)return;
