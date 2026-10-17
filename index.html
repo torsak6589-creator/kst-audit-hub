@@ -128,7 +128,7 @@ body{margin:0}
 
 
 <header class="top"><div class="wrap bar">
-  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0 · GMP · HACCP · v13.11.1</span></div>
+  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0 · GMP · HACCP · v13.11.4</span></div>
   <nav role="tablist" id="nav">
     <button role="tab" data-t="home" aria-selected="true">ภาพรวม</button>
     <button role="tab" data-t="teams" aria-selected="false">ทีมตรวจ</button>
@@ -376,20 +376,28 @@ function sumRows(systems,fmt){var D=SUMD[fmt]||SUMD.sum;
   if(!sel.length)return rows;
   D.d.items.forEach(function(m){
     var hit=m.std.filter(function(x){return sel.indexOf(x)>=0});
-    if(!hit.length&&!m.x)return;
+    if(!hit.length&&!(m.x&&sel.length>=2))return;
     var use=hit.length?hit:[sel[0]];
-    rows.push({id:D.p+m.n,group:D.d.secs[m.sec],title:m.q,sum:m,qs:use.map(function(x){return{s:x,c:sumRefs(m,x)||String(m.n),q:'',det:[]}})});
+    rows.push({id:D.p+m.n,group:D.d.secs[m.sec],title:m.q,sum:m,sel:sel,qs:use.map(function(x){return{s:x,c:sumRefs(m,x)||String(m.n),q:'',det:[]}})});
   });
   return rows;
 }
+var RQTAG={f22:/\((ISO 22000|PRP|FSSC-AR|FSSC)\)\s*$/,bap:/\(BAP\)\s*$/,gmp:/\(GMP\)\s*$/,haccp:/\(HACCP\)\s*$/};
+/* เฉพาะส่วนของระบบที่เลือกตรวจ */
+function sumView(r){
+  var m=r.sum,sel=r.sel||m.std,on=function(x){return sel.indexOf(x)>=0};
+  var rq=(m.rq||[]).filter(function(l){if(/^\[.*ต้องตรวจสอบ.*\]$/.test(l))return false;return sel.some(function(x){return RQTAG[x].test(l)})});
+  var og=String(m.og||'').split(/\n\s*\n|\n(?=\[)/).filter(function(b){var t=(b.match(/^\s*\[[^\]]*\((GMP|HACCP)\)\]/)||[])[1];return t?on(t.toLowerCase()):false}).join('\n\n');
+  return{std:m.std.filter(on),rq:rq.join('\n'),gf:on('f22')?m.gf:'',gb:on('bap')?m.gb:'',og:og,of:on('f22')?m.of:'',ob:on('bap')?m.ob:''};
+}
 function sumHtml(r){
-  var m=r.sum,kv=function(k,v,c){return v?'<div class="kv"><b>'+k+'</b><span'+(c?' class="'+c+'"':'')+'>'+esc(v)+'</span></div>':''};
-  var tags=m.std.map(function(x){return '<span class="tag">'+SYS[x].short+'</span>'}).join('')+(m.x?'<span class="tag">ข้อเสนอเพิ่ม</span>':'');
-  var rq=(m.rq||[]).filter(function(l){return !/^\[.*ต้องตรวจสอบ.*\]$/.test(l)}).join('\n');
+  var m=r.sum,V=sumView(r),kv=function(k,v,c){return v?'<div class="kv"><b>'+k+'</b><span'+(c?' class="'+c+'"':'')+'>'+esc(v)+'</span></div>':''};
+  var tags=V.std.map(function(x){return '<span class="tag">'+SYS[x].short+'</span>'}).join('')+(m.x&&!V.std.length?'<span class="tag">ข้อเสนอเพิ่ม</span>':'');
   var dd=function(k,v){return v?'<details class="det"><summary>'+k+'</summary><div class="body" style="white-space:pre-line">'+esc(v)+'</div></details>':''};
+  var gh=(r.sel||[]).filter(function(x){return x==='gmp'||x==='haccp'}).map(function(x){return SYS[x].short}).join(' / ');
   return '<h4>'+m.n+'. '+esc(m.q)+'</h4><div class="small muted" style="margin:2px 0 6px">หมวด: '+esc(m.cat)+' · '+tags+(function(){var rv=r.id.indexOf('U_')===0&&SUMREV[m.n]?SUMREV[m.n]:m.dp;var df=rv.join(',')!==m.dp.join(',');return rv.length?' · ฝ่ายที่ต้องตรวจ: <b>'+esc(rv.join(', ').replace('SAN','Sanitation'))+'</b>'+(df?' <span class="small muted" title="คอลัมน์ฝ่ายในไฟล์ SUM ก่อนทบทวน">(ไฟล์ SUM: '+esc(m.dp.join(', '))+')</span>':''):''})()+'</div>'+
-    kv('ข้อกำหนด',rq,'pl')+kv('หลักฐานที่ต้องเห็น',m.ev)+kv('วิธีตรวจ / ตัวอย่างที่สุ่ม',m.mt)+kv('หมายเหตุ',m.nt)+
-    dd('แนวทางเอกสาร / การตรวจที่เกี่ยวข้อง (FSSC 22000)',m.gf)+dd('แนวทางการตรวจ และเอกสาร (BAP)',m.gb)+dd('ข้อความรายการตรวจเดิม — GMP / HACCP',m.og)+dd('ข้อความรายการตรวจเดิม — FSSC 22000 V6',m.of)+dd('ข้อความรายการตรวจเดิม — BAP SPS 6.0',m.ob);
+    kv('ข้อกำหนด',V.rq,'pl')+kv('หลักฐานที่ต้องเห็น',m.ev)+kv('วิธีตรวจ / ตัวอย่างที่สุ่ม',m.mt)+kv('หมายเหตุ',m.nt)+
+    dd('แนวทางเอกสาร / การตรวจที่เกี่ยวข้อง (FSSC 22000)',V.gf)+dd('แนวทางการตรวจ และเอกสาร (BAP)',V.gb)+dd('ข้อความรายการตรวจเดิม — '+(gh||'GMP / HACCP'),V.og)+dd('ข้อความรายการตรวจเดิม — FSSC 22000 V6',V.of)+dd('ข้อความรายการตรวจเดิม — BAP SPS 6.0',V.ob);
 }
 /* ---------- รายละเอียดเชิงลึกจากไฟล์ KST (FM-MR-10 / FSSC / BAP) ---------- */
 function cn(c){return String(c).replace(/\./g,'_').replace(/[^A-Za-z0-9_]/g,'')}
@@ -631,11 +639,38 @@ function saveAcc(){ACC.updated=Date.now();if(S.db)S.db.doc('config/access').set(
 function tryUnlock(role,pw){
   var h=hpw(pw),adm=(ACC.admin||DEF_ADMIN);
   if(!String(pw||'').trim())return false;
-  if(role==='admin'){if(h!==adm)return false;UNL.admin=1}
-  else{var th=(ACC.teams||{})[role];if(h===adm){UNL.admin=1}else if(th&&h===th){UNL.teams[role]=1}else return false}
+  if(role==='admin'){if(h!==adm)return false;UNL.admin=1;S.admPw=String(pw).trim()}
+  else{var th=(ACC.teams||{})[role];if(h===adm){UNL.admin=1;S.admPw=String(pw).trim()}else if(th&&h===th){UNL.teams[role]=1}else return false}
   saveUnl();computeMe();whoRender();return true;
 }
-function lockAll(){UNL={admin:0,teams:{}};saveUnl();computeMe();whoRender();show(S.tab)}
+function lockAll(){UNL={admin:0,teams:{}};S.admPw=null;S.codes={};S.seen={};saveUnl();computeMe();whoRender();show(S.tab)}
+
+/* คัดลอกข้อความ: clipboard API → execCommand → กล่องข้อความให้กด Ctrl+C เอง */
+function copyText(t,okMsg){
+  var fallback=function(){
+    var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+    document.body.appendChild(ta);ta.focus();ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();
+    if(ok){toast(okMsg||'คัดลอกแล้ว');return}
+    var m=document.createElement('div');m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    m.innerHTML='<div class="card" style="max-width:640px;width:100%"><b>คัดลอกข้อความด้านล่าง</b><p class="small muted" style="margin:4px 0 8px">ข้อความถูกเลือกไว้แล้ว กด Ctrl+C (มือถือ: กดค้างแล้วเลือก “คัดลอก”)</p><textarea style="width:100%;min-height:260px;font-family:monospace">'+esc(t)+'</textarea><div class="row" style="margin-top:8px"><button class="btn pri">ปิด</button></div></div>';
+    document.body.appendChild(m);var a=m.querySelector('textarea');a.focus();a.select();m.querySelector('button').onclick=function(){m.remove()};m.onclick=function(e){if(e.target===m)m.remove()};
+  };
+  try{if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(function(){toast(okMsg||'คัดลอกแล้ว')},fallback);return}}catch(e){}
+  fallback();
+}
+/* เก็บรหัสทีมแบบเข้ารหัส AES-GCM ด้วยรหัส QMR — เฉพาะผู้รู้รหัส QMR เปิดดูได้ */
+var CRY=window.crypto&&window.crypto.subtle;
+function b64(u){var s='';new Uint8Array(u).forEach(function(x){s+=String.fromCharCode(x)});return btoa(s)}
+function ub64(t){var s=atob(t),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+function deriveKey(pw,salt){return CRY.importKey('raw',new TextEncoder().encode(String(pw).trim()),'PBKDF2',false,['deriveKey']).then(function(k){
+  return CRY.deriveKey({name:'PBKDF2',salt:salt,iterations:150000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])})}
+function encCodes(pw,obj){if(!CRY)return Promise.reject('nocrypto');var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  return deriveKey(pw,salt).then(function(k){return CRY.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(JSON.stringify(obj)))}).then(function(ct){return{s:b64(salt),iv:b64(iv),ct:b64(ct)}})}
+function decCodes(pw,b){if(!CRY||!b)return Promise.reject('nocrypto');return deriveKey(pw,ub64(b.s)).then(function(k){return CRY.decrypt({name:'AES-GCM',iv:ub64(b.iv)},k,ub64(b.ct))}).then(function(pt){return JSON.parse(new TextDecoder().decode(pt))})}
+function saveCodes(){if(!S.admPw||!CRY){saveAcc();return Promise.resolve()}
+  var keep={};Object.keys(S.codes||{}).forEach(function(i){if((ACC.teams||{})[i]===hpw(S.codes[i]))keep[i]=S.codes[i]});
+  return encCodes(S.admPw,keep).then(function(e){ACC.enc=e;saveAcc()},function(){saveAcc()})}
+function loadCodes(){if(!S.admPw||!ACC.enc)return Promise.resolve(false);return decCodes(S.admPw,ACC.enc).then(function(m){S.codes=Object.assign({},m,S.codes||{});return true},function(){return false})}
 function genCode(){var c='ABCDEFGHJKMNPQRSTUVWXYZ23456789',o='';for(var i=0;i<6;i++)o+=c[Math.floor(Math.random()*c.length)];return o}
 /* ---------- สิทธิ์ ---------- */
 /* เปิดใช้งานทั่วไป: ทุกคนที่มีลิงก์เข้าใช้และแก้ไขได้ ไม่ต้องล็อกอิน (ตั้งเป็น false เพื่อกลับไปใช้ระบบล็อกอิน+สิทธิ์ตามทีม ซึ่งต้องใช้ schema.sql) */
@@ -682,10 +717,10 @@ function renderTeams(){
      '<textarea id="t-bulk" style="min-height:90px;margin-top:6px" placeholder="ชื่อ อีเมล"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="t-match">จับคู่อีเมล</button><span class="small muted" id="t-bm"></span></div></div>';
   }
   if(OPEN&&adm){
-    html+='<div class="card"><h2 style="font-size:17px;margin-bottom:6px">รหัสผ่านสิทธิ์แก้ไข</h2><p class="small muted" style="margin:0 0 10px">ทุกคนเปิดดูได้ แต่การเปิดการตรวจ/บันทึกผล/แก้รายงานต้องใช้รหัสของทีมนั้น — สร้างรหัสแล้วแจ้งหัวหน้าทีม หัวหน้าทีมแจกให้ลูกทีมที่ช่วยตรวจ (รหัสแสดงครั้งเดียว ถ้าลืมให้สร้างใหม่)</p>'+
-     '<div class="scroll"><table><thead><tr><th>ทีม</th><th>หัวหน้าทีม</th><th>สถานะ</th><th></th><th>รหัสใหม่</th></tr></thead><tbody>'+
-     teams.map(function(t,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(t.lead)+'</td><td>'+((ACC.teams||{})[i]?'<span class="pill p-PASS">ตั้งแล้ว</span>':'<span class="pill p-MI">ยังไม่ตั้ง</span>')+'</td><td><button class="btn sm" data-gen="'+i+'">สร้างรหัสใหม่</button></td><td><code id="pw-out-'+i+'" style="font-size:15px"></code></td></tr>'}).join('')+
-     '</tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" id="pw-all">สร้างรหัสทุกทีม</button>'+
+    html+='<div class="card"><h2 style="font-size:17px;margin-bottom:6px">รหัสผ่านสิทธิ์แก้ไข</h2><p class="small muted" style="margin:0 0 10px">ทุกคนเปิดดูได้ แต่การเปิดการตรวจ/บันทึกผล/แก้รายงานต้องใช้รหัสของทีมนั้น — สร้างรหัสแล้วแจ้งหัวหน้าทีม หัวหน้าทีมแจกให้ลูกทีมที่ช่วยตรวจ — กด “ดูรหัส” เพื่อเปิดดูและคัดลอกได้ตลอด (เฉพาะผู้ที่รู้รหัส QMR)</p>'+
+     '<div class="scroll"><table><thead><tr><th>ทีม</th><th>หัวหน้าทีม</th><th>สถานะ</th><th></th><th>รหัสทีม</th></tr></thead><tbody>'+
+     teams.map(function(t,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(t.lead)+'</td><td>'+((ACC.teams||{})[i]?'<span class="pill p-PASS">ตั้งแล้ว</span>':'<span class="pill p-MI">ยังไม่ตั้ง</span>')+'</td><td><button class="btn sm" data-gen="'+i+'">สร้างรหัสใหม่</button></td><td><code id="pw-out-'+i+'" style="font-size:15px;user-select:all;min-width:72px;display:inline-block"></code> <button class="btn sm" data-see="'+i+'" hidden>ดูรหัส</button> <button class="btn sm" data-cp="'+i+'" hidden>คัดลอก</button></td></tr>'}).join('')+
+     '</tbody></table></div><div class="row" id="pw-view" style="margin-top:8px" hidden><span class="small">ใส่รหัส QMR อีกครั้งเพื่อเปิดดูรหัสทีมที่บันทึกไว้</span><input id="pw-view-in" type="password" style="width:150px;display:inline-block"><button class="btn sm pri" id="pw-view-go">เปิดดูรหัส</button></div><div class="row" style="margin-top:10px"><button class="btn" id="pw-all">สร้างรหัสทุกทีม</button>'+
      '<button class="btn pri" id="pw-print">พิมพ์ใบแจ้งรหัส (PDF)</button><button class="btn" id="pw-csv">ดาวน์โหลด CSV</button><button class="btn" id="pw-copy">คัดลอกข้อความแจ้งทีม</button><span class="small muted" id="pw-note"></span>'+
      '</div><div class="row" style="margin-top:8px"><span class="small muted">·</span><label class="small">รหัส QMR ใหม่ <input id="pw-adm" type="password" style="width:150px;display:inline-block"></label><button class="btn sm" id="pw-adm-go">เปลี่ยนรหัส QMR</button></div></div>';
   }
@@ -711,22 +746,30 @@ function renderTeams(){
   $('v-teams').innerHTML=html;
   if(OPEN&&adm){
     var gen=function(i){var c=genCode();ACC.teams=ACC.teams||{};ACC.teams[i]=hpw(c);S.codes=S.codes||{};S.codes[i]=c;return c};
-    Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(b){b.onclick=function(){var i=+b.dataset.gen,c=gen(i);saveAcc();
-      Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(x){});var o=$('pw-out-'+i);o.textContent=c;
-      var st=b.parentNode.previousElementSibling;st.innerHTML='<span class="pill p-PASS">ตั้งแล้ว</span>';toast('รหัสทีม '+(i+1)+': '+c+' — จดไว้แจ้งหัวหน้าทีม');$('pw-note').textContent='พร้อมส่งออก '+picked().length+' ทีม'}});
+    Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(b){b.onclick=function(){var i=+b.dataset.gen,c=gen(i);S.seen=S.seen||{};S.seen[i]=1;saveCodes();
+      var st=b.parentNode.previousElementSibling;st.innerHTML='<span class="pill p-PASS">ตั้งแล้ว</span>';toast('รหัสทีม '+(i+1)+': '+c+' — จดไว้แจ้งหัวหน้าทีม');showCp();$('pw-note').textContent='พร้อมส่งออก '+picked().length+' ทีม'}});
     $('pw-all').onclick=function(){if(this.dataset.arm!=='1'){this.dataset.arm='1';this.textContent='กดอีกครั้ง — รหัสเดิมทุกทีมจะใช้ไม่ได้';return}
-      var out=teams.map(function(t,i){var c=gen(i);$('pw-out-'+i).textContent=c;return 'ทีม '+(i+1)+' '+t.lead+': '+c});saveAcc();
+      S.seen=S.seen||{};var out=teams.map(function(t,i){var c=gen(i);S.seen[i]=1;return 'ทีม '+(i+1)+' '+t.lead+': '+c});saveCodes();
       Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(b){b.parentNode.previousElementSibling.innerHTML='<span class="pill p-PASS">ตั้งแล้ว</span>'});
-      this.dataset.arm='';this.textContent='สร้างรหัสทุกทีม';$('pw-note').textContent='พร้อมส่งออก '+picked().length+' ทีม';
-      try{navigator.clipboard.writeText(out.join('\n'));toast('สร้างแล้ว และคัดลอกรายการรหัสทุกทีมไว้ในคลิปบอร์ด')}catch(e){toast('สร้างรหัสทุกทีมแล้ว')}};
-    Object.keys(S.codes||{}).forEach(function(i){var o=$('pw-out-'+i);if(o)o.textContent=S.codes[i]});
+      this.dataset.arm='';this.textContent='สร้างรหัสทุกทีม';showCp();$('pw-note').textContent='พร้อมส่งออก '+picked().length+' ทีม';
+      copyText(out.join('\n'),'สร้างรหัสทุกทีมแล้ว และคัดลอกรายการไว้ในคลิปบอร์ด')};
+    var showCp=function(){S.seen=S.seen||{};teams.forEach(function(t,i){var c=(S.codes||{})[i],o=$('pw-out-'+i),see=document.querySelector('[data-see="'+i+'"]'),cp=document.querySelector('[data-cp="'+i+'"]');if(!o)return;
+      var set=!!(ACC.teams||{})[i];o.textContent=c?(S.seen[i]?c:'••••••'):(set&&!S.admPw&&ACC.enc?'••••••':(set&&!ACC.enc?'(สร้างก่อนเวอร์ชันนี้ — กดสร้างใหม่เพื่อเก็บไว้ดูได้)':''));
+      o.style.fontSize=c||!set||ACC.enc?'15px':'11px';
+      see.hidden=!(c||(set&&ACC.enc&&!S.admPw));see.textContent=S.seen[i]&&c?'ซ่อน':'ดูรหัส';cp.hidden=!c;
+      see.onclick=function(){if(!c){$('pw-view').hidden=false;$('pw-view-in').focus();return}S.seen[i]=S.seen[i]?0:1;showCp()};
+      cp.onclick=function(){copyText(msg({i:i,t:t,c:c}),'คัดลอกข้อความแจ้งรหัสทีม '+(i+1)+' แล้ว')}});
+      if($('pw-note'))$('pw-note').textContent=picked().length?('พร้อมส่งออก '+picked().length+' ทีม'):'';};
+    $('pw-view').hidden=!(ACC.enc&&!S.admPw);
+    $('pw-view-go').onclick=function(){var v=$('pw-view-in').value;if(hpw(v)!==(ACC.admin||DEF_ADMIN)){toast('รหัส QMR ไม่ถูกต้อง');return}S.admPw=String(v).trim();
+      loadCodes().then(function(ok){$('pw-view').hidden=true;if(!ok)toast('เปิดรหัสที่บันทึกไว้ไม่ได้ — สร้างรหัสใหม่');showCp()})};
+    if(S.admPw&&ACC.enc&&!S.codesLoaded){S.codesLoaded=1;loadCodes().then(function(){showCp()})}
     var URL0=location.href.split(/[?#]/)[0];
     var picked=function(){var c=S.codes||{};return teams.map(function(t,i){return{i:i,t:t,c:c[i]}}).filter(function(x){return x.c})};
-    var need=function(){var l=picked();if(!l.length){toast('ยังไม่มีรหัสในรอบนี้ — กด “สร้างรหัสทุกทีม” หรือ “สร้างรหัสใหม่” ก่อน (ระบบเก็บรหัสแบบเข้ารหัส จึงแสดงย้อนหลังไม่ได้)');return null}return l};
-    $('pw-note').textContent=picked().length?('พร้อมส่งออก '+picked().length+' ทีม'):'ส่งออกได้เฉพาะรหัสที่สร้างในหน้านี้ (ก่อนรีเฟรช)';
+    var need=function(){var l=picked();if(!l.length){toast(ACC.enc&&!S.admPw?'ใส่รหัส QMR เพื่อเปิดดูรหัสทีมก่อน':'ยังไม่มีรหัสที่เปิดดูได้ — กด “สร้างรหัสทุกทีม” หรือ “สร้างรหัสใหม่”');if(ACC.enc&&!S.admPw)$('pw-view').hidden=false;return null}return l};
+    setTimeout(showCp,0);
     var msg=function(x){return 'แจ้งรหัสเข้าแก้ไข KST Audit Hub\nทีม '+(x.i+1)+' · หัวหน้าทีม '+x.t.lead+'\nรหัสทีม: '+x.c+'\nวันที่ตรวจ: '+(x.t.dates||'')+' เวลา '+(x.t.time||'')+'\nหน่วยงาน: '+(x.t.depts||[]).join(', ')+'\nลิงก์: '+URL0+'\nวิธีใช้: เลือกทีม '+(x.i+1)+' ใส่รหัส แล้วกด “เริ่มตรวจ” (ลูกทีมใส่รหัสเดียวกันในแถบ “อ่านอย่างเดียว” เพื่อช่วยบันทึก) — ห้ามส่งต่อนอกทีม'};
-    $('pw-copy').onclick=function(){var l=need();if(!l)return;var t=l.map(msg).join('\n\n----------\n\n');
-      try{navigator.clipboard.writeText(t).then(function(){toast('คัดลอกข้อความ '+l.length+' ทีมแล้ว — วางใน LINE/อีเมลได้')},function(){prompt('คัดลอกข้อความนี้',t)})}catch(e){prompt('คัดลอกข้อความนี้',t)}};
+    $('pw-copy').onclick=function(){var l=need();if(!l)return;copyText(l.map(msg).join('\n\n----------\n\n'),'คัดลอกข้อความ '+l.length+' ทีมแล้ว — วางใน LINE/อีเมลได้')};
     $('pw-csv').onclick=function(){var l=need();if(!l)return;
       dl(csvRows([['ทีม','หัวหน้าทีม','ผู้ตรวจติดตาม','ผู้สังเกตการณ์','วันที่ตรวจ','เวลา','หน่วยงานที่ตรวจ','รหัสทีม','ลิงก์']].concat(l.map(function(x){return[x.i+1,x.t.lead,(x.t.members||[]).join(', '),(x.t.observers||[]).join(', '),x.t.dates,x.t.time,(x.t.depts||[]).join(' / '),x.c,URL0]}))),'KST-Audit-Hub_รหัสทีม_'+FM24.round.replace('/','-')+'.csv')};
     $('pw-print').onclick=function(){var l=need();if(!l)return;
@@ -737,7 +780,7 @@ function renderTeams(){
           '<tr><td>วันที่ / เวลา</td><td>'+esc(x.t.dates||'')+' · '+esc(x.t.time||'')+'</td></tr><tr><td>หน่วยงานที่ตรวจ</td><td>'+esc((x.t.depts||[]).join(', '))+'</td></tr></table>'+
           '<div>รหัสทีม</div><div class="code">'+esc(x.c)+'</div>'+
           '<div class="small">ลิงก์: '+esc(URL0)+'<br>วิธีใช้: เลือกทีม '+(x.i+1)+' ใส่รหัส แล้วกด “เริ่มตรวจ” · ลูกทีมที่ช่วยตรวจใส่รหัสเดียวกันในแถบ “อ่านอย่างเดียว” ของรายงานทีม · 1 ทีม/หน่วยงาน = 1 รายงาน · ห้ามส่งต่อนอกทีม</div></div>'}).join(''))};
-    $('pw-adm-go').onclick=function(){var v=$('pw-adm').value.trim();if(v.length<6){toast('รหัส QMR ต้องยาวอย่างน้อย 6 ตัวอักษร');return}ACC.admin=hpw(v);saveAcc();$('pw-adm').value='';toast('เปลี่ยนรหัส QMR แล้ว')};
+    $('pw-adm-go').onclick=function(){var v=$('pw-adm').value.trim();if(v.length<6){toast('รหัส QMR ต้องยาวอย่างน้อย 6 ตัวอักษร');return}var fin=function(){ACC.admin=hpw(v);S.admPw=v;saveCodes();$('pw-adm').value='';toast('เปลี่ยนรหัส QMR แล้ว (รหัสทีมที่เก็บไว้ถูกเข้ารหัสใหม่ด้วยรหัส QMR ใหม่)')};if(ACC.enc&&S.admPw)loadCodes().then(fin);else fin()};
   }
   if(!adm)return;
   Array.prototype.forEach.call($('v-teams').querySelectorAll('[data-em]'),function(i){i.oninput=function(){S.draft[i.dataset.em]=i.value}});
@@ -899,9 +942,10 @@ function renderAudit(){
   head=head.replace('<!--REL-->','<div class="relnote"><i></i>ข้อความสีแดงและมีวงกลมนำหน้า = ข้อที่ตรงกับข้อกำหนดและเนื้องานของแผนกที่ตรวจ ('+nrel+' จาก '+rows.length+' ข้อ)'+(Object.keys(dtags).length?'':' — ไม่พบรหัสแผนกในชื่อหน่วยงาน')+'</div>');
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:12px">'+roBanner(a)+head+'<div class="card" style="padding:10px 14px">'+SEVG+'</div>'+bar+'<div>'+(body||'<div class="empty">ไม่มีข้อที่ตรงกับตัวกรอง</div>')+'</div>'+
    '<div class="note">Critical / Major / Minor / Obs จะออกใบ CAR ตามระดับที่เลือก · Pass, Comment และ N/A ไม่ออก CAR</div>'+
-   '<div class="row"><button class="btn pri" id="a-sum">ไปหน้าสรุปผล / ออก CAR</button>'+(ed?'<button class="btn" id="a-del">ลบการตรวจนี้</button>':'')+'<span class="small muted" id="a-conf"></span></div></div>';
+   '<div class="row"><button class="btn pri" id="a-sum">ไปหน้าสรุปผล / ออก CAR</button><button class="btn" id="a-pr0">พิมพ์ Checklist (ฟอร์มเปล่า)</button><button class="btn" id="a-pr1">พิมพ์ Checklist พร้อมผลตรวจ</button>'+(ed?'<button class="btn" id="a-del">ลบการตรวจนี้</button>':'')+'<span class="small muted" id="a-conf"></span></div></div>';
   $('flt').value=S.filter;$('flt').onchange=function(){S.filter=this.value;renderAudit()};
   $('a-sum').onclick=function(){show('sum')};
+  $('a-pr0').onclick=function(){printChecklist(a,false)};$('a-pr1').onclick=function(){printChecklist(a,true)};
   if($('a-del'))$('a-del').onclick=function(){
     var b=this;if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='กดอีกครั้งเพื่อยืนยันลบ';return}
     removeAudit(a.id);S.cur=null;show('home')};
@@ -1052,6 +1096,34 @@ function printHtml(html){
   setTimeout(function(){try{window.print()}catch(e){done()}},50);
 }
 function box(on){return on?'☑':'☐'}
+/* ---------- พิมพ์ Checklist FM-MR-10 (เฉพาะระบบที่เลือก + ตามตัวกรองที่แสดงอยู่) ---------- */
+function printChecklist(a,withRes){
+  var rows=rowsFor(a.systems,a.fmt),t=teamOf(a),dt=deptTags(a.dept),f=S.filter,last='',n=0,body='';
+  rows.forEach(function(r){
+    var v=(a.results||{})[r.id]||{};
+    if(f==='open'&&v.r)return;if(f==='FIND'&&!FIND[v.r])return;if(RES.indexOf(f)>=0&&v.r!==f)return;var rel=isRel(r,dt);if(f==='REL'&&!rel)return;
+    if(r.group!==last){body+='<tr><td colspan="5" style="background:#e8eef2;font-weight:600">'+esc(r.group)+'</td></tr>';last=r.group}
+    n++;
+    var ref=r.qs.map(function(q){return (r.qs.length>1||r.sum?SYS[q.s].short+' ':'')+q.c}).filter(function(x,i,ar){return ar.indexOf(x)===i}).join('<br>');
+    var txt;
+    if(r.sum){var m=r.sum;txt='<b>'+esc(m.q)+'</b>'+(m.ev?'<div style="font-size:10.5px;margin-top:3px"><u>หลักฐานที่ต้องเห็น</u>: '+esc(m.ev)+'</div>':'')+(m.mt?'<div style="font-size:10.5px"><u>วิธีตรวจ/สุ่ม</u>: '+esc(m.mt)+'</div>':'')+(m.nt?'<div style="font-size:10.5px;font-style:italic">'+esc(m.nt)+'</div>':'')}
+    else txt='<b>'+esc(r.title)+'</b>'+r.qs.map(function(q){return q.q?'<div style="font-size:11px">'+(r.qs.length>1?'['+SYS[q.s].short+'] ':'')+esc(q.q)+'</div>':''}).join('');
+    var res=withRes?(v.r?'<b>'+RL[v.r]+'</b>':''):'<div style="font-size:10px;line-height:1.7">☐ Pass ☐ Cr<br>☐ Ma ☐ Mi<br>☐ Obs ☐ Cm<br>☐ N/A</div>';
+    body+='<tr><td style="text-align:center">'+(rel?'<span style="color:#c0201b">●</span> ':'')+(r.sum?r.sum.n:n)+'</td><td style="font-size:10.5px;white-space:nowrap">'+ref+'</td><td>'+txt+'</td><td style="text-align:center">'+res+'</td><td>'+(withRes?esc(v.n||''):'')+'</td></tr>';
+  });
+  var sy=function(k){return box((a.systems||[]).indexOf(k)>=0)};
+  printHtml('<style>@page{size:A4 landscape;margin:10mm}.pf tr{page-break-inside:avoid}</style>'+
+    '<div class="hd"><span>KIANG HUAT SEA GULL TRADING FROZEN FOOD PCL.</span><span>FM-MR-10 · รายการตรวจสอบ (Audit Checklist)</span></div>'+
+    '<h1>รายการตรวจสอบ (Audit Checklist)'+(withRes?' — ผลการตรวจ':'')+'</h1>'+
+    '<table style="margin-bottom:6px"><tr><td colspan="2">'+sy('f22')+' FSSC 22000 &nbsp; '+sy('bap')+' BAP SPS 6.0 &nbsp; '+sy('gmp')+' GMP &nbsp; '+sy('haccp')+' HACCP &nbsp; '+sy('q9')+' ISO 9001 &nbsp; '+sy('e14')+' ISO 14001</td></tr>'+
+    '<tr><td style="width:50%">ชื่อการตรวจ: <b>'+esc(a.name)+'</b> &nbsp; ทีม '+((a.team||0)+1)+'</td><td>วันที่ตรวจ: '+esc(thDate(a.date))+(a.time?' เวลา '+esc(a.time):'')+'</td></tr>'+
+    '<tr><td colspan="2">ฝ่าย/แผนก: <b>'+esc(a.dept)+'</b></td></tr>'+
+    '<tr><td colspan="2">หัวหน้าทีม: '+esc(t.lead||'')+' · ผู้ตรวจ: '+esc((t.members||[]).join(', '))+((t.observers||[]).length?' · ผู้สังเกตการณ์: '+esc(t.observers.join(', ')):'')+'</td></tr></table>'+
+    '<table><thead><tr><th style="width:46px">ลำดับ</th><th style="width:110px">ข้อกำหนด</th><th>รายการตรวจสอบ</th><th style="width:92px">ผลการตรวจสอบ</th><th style="width:22%">บันทึก</th></tr></thead><tbody>'+body+'</tbody></table>'+
+    '<div style="font-size:10.5px;margin-top:6px"><span style="color:#c0201b">●</span> = ข้อที่ตรงกับเนื้องานของฝ่ายที่ตรวจ · ผลการตรวจ: Pass / Critical / Major / Minor / Obs / Comment / N/A (นิยามตาม FM-MR-10)'+(f!=='all'?' · พิมพ์ตามตัวกรองที่เลือก':'')+' · รวม '+n+' ข้อ</div>'+
+    '<table style="margin-top:14px"><tr><td style="height:46px;width:50%">ลงชื่อผู้บันทึก ........................................ (หัวหน้าทีมตรวจ)<br>วันที่ ........./........./.........</td><td>ลงชื่อผู้ทบทวน ........................................ (QMR / HACCP Leader)<br>วันที่ ........./........./.........</td></tr></table>');
+}
+
 function carPrint(c){
   var s=c.std||'';
   return '<div class="pb"><div class="hd"><b>FM-MR-07</b><span>Issue No. : 01 · Effective Date : 19/09/2023</span></div>'+
