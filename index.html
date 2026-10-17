@@ -128,7 +128,7 @@ body{margin:0}
 
 
 <header class="top"><div class="wrap bar">
-  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0 · GMP · HACCP · v13.10.9</span></div>
+  <div class="brand"><b>KST Audit Hub</b><span>QMR · ISO 9001 · ISO 14001 · FSSC 22000 · BAP SPS 6.0 · GMP · HACCP · v13.11.0</span></div>
   <nav role="tablist" id="nav">
     <button role="tab" data-t="home" aria-selected="true">ภาพรวม</button>
     <button role="tab" data-t="teams" aria-selected="false">ทีมตรวจ</button>
@@ -534,7 +534,7 @@ function show(t){
   S.tab=t;
   ['home','teams','audit','sum','cars','rep'].forEach(function(k){$('v-'+k).hidden=(k!==t)});
   Array.prototype.forEach.call($('nav').children,function(b){b.setAttribute('aria-selected',b.dataset.t===t)});
-  if(t==='home')renderHome();if(t==='teams')renderTeams();if(t==='audit')renderAudit();if(t==='sum')renderSum();if(t==='cars')renderCars();if(t==='rep')renderRep();
+  if(t==='home')renderHome();if(t==='teams')renderTeams();if(t==='audit')renderAudit();if(t==='sum')renderSum();if(t==='cars')renderCars();if(t==='rep')renderRep();bindRo($('v-'+t));
   try{window.scrollTo(0,0)}catch(e){}
 }
 
@@ -547,7 +547,7 @@ function renderHome(){
       rowsFor(a.systems,a.fmt).forEach(function(r){var v=(a.results||{})[r.id];if(!v||!v.r)return;
         if(r.qs.some(function(q){return q.s===s})){if(v.r==='CR')cr++;if(v.r==='MA')ma++;if(v.r==='MI')mi++;if(v.r==='OBS')obs++}})});
     return '<div class="card sys"><span class="n">'+esc(SYS[s].name)+'</span><span class="big">'+n+' <span class="small muted" style="font-family:var(--f-body)">การตรวจ</span></span><span class="small"><span class="pill p-CR">Cr '+cr+'</span> <span class="pill p-MA">Ma '+ma+'</span> <span class="pill p-MI">Mi '+mi+'</span> <span class="pill p-OBS">Obs '+obs+'</span></span></div>'}).join('');
-  var teamOpts=teams.map(function(t,i){return !canTeam(i)?'':'<option value="'+i+'">ทีม '+(i+1)+' · หัวหน้า '+esc(t.lead)+'</option>'}).join('');
+  var teamOpts=teams.map(function(t,i){return '<option value="'+i+'">ทีม '+(i+1)+' · หัวหน้า '+esc(t.lead)+'</option>'}).join('');
   var n=list.length+1;
   var today=new Date().toISOString().slice(0,10);
   $('v-home').innerHTML=
@@ -564,7 +564,7 @@ function renderHome(){
     '<div style="margin-top:12px" class="f"><span class="small muted">ระบบที่ตรวจ</span><div class="chk" id="n-sys" style="margin-top:6px">'+
      SKEYS.map(function(s){return '<label><input type="checkbox" value="'+s+'"> '+esc(SYS[s].name)+'</label>'}).join('')+'</div></div>'+
     '<p class="note" style="margin:12px 0">ผู้ตรวจต้องไม่ตรวจงานของตนเอง (ISO 9.2) เลือกทีมที่ไม่ได้สังกัดหน่วยงานที่ถูกตรวจ</p>'+
-    ''+(teamOpts?'<button class="btn pri" id="n-go">เริ่มตรวจ</button>':'<span class="ro">คุณยังไม่ได้อยู่ในทีมตรวจ — ดูผลอย่างเดียว (ขอให้ QMR เพิ่มอีเมลของคุณในหน้า “ทีมตรวจ”)</span>')+' <span class="small muted" id="n-err"></span><p class="small muted" id="n-hint" style="margin:8px 0 0"></p></div>'+
+    '<span id="n-pwbox"></span> '+(teamOpts?'<button class="btn pri" id="n-go">เริ่มตรวจ</button>':'<span class="ro">คุณยังไม่ได้อยู่ในทีมตรวจ — ดูผลอย่างเดียว (ขอให้ QMR เพิ่มอีเมลของคุณในหน้า “ทีมตรวจ”)</span>')+' <span class="small muted" id="n-err"></span><p class="small muted" id="n-hint" style="margin:8px 0 0"></p></div>'+
    '<div class="card"><h2 style="font-size:17px;margin-bottom:8px">การตรวจทั้งหมด</h2>'+
     (list.length?'<div class="row" style="margin-bottom:8px"><button class="btn sm" id="l-del" disabled>ลบที่เลือก (0)</button><span class="small muted">ติ๊กช่องหน้ารายการเพื่อเลือกที่จะลบ</span></div><div class="scroll"><table><thead><tr><th style="width:28px"><input type="checkbox" id="l-all" aria-label="เลือกทั้งหมด"></th><th>ชื่อ</th><th>หน่วยงาน</th><th>วันที่</th><th>ระบบ</th><th>ความคืบหน้า</th><th>ข้อบกพร่อง</th><th></th></tr></thead><tbody>'+
      list.map(function(a){var c=stats(a);return '<tr><td>'+(canEdit(a)?'<input type="checkbox" class="l-sel" value="'+a.id+'" aria-label="เลือก '+esc(a.name)+'">':'')+'</td><td><b>'+esc(a.name)+'</b><div class="small muted">ทีม '+((a.team||0)+1)+' · '+esc(teamOf(a,teams).lead||'')+'</div></td><td>'+esc(a.dept)+'</td><td>'+esc(thDate(a.date))+(a.time?'<div class="small muted">'+esc(a.time)+'</div>':'')+'</td><td>'+(a.systems||[]).map(function(s){return '<span class="tag">'+SYS[s].short+'</span>'}).join('')+'</td><td class="cnt">'+c.done+'/'+c.total+'</td><td>'+((c.CR+c.MA+c.MI)?(c.CR?'<span class="pill p-CR">Cr '+c.CR+'</span> ':'')+(c.MA?'<span class="pill p-MA">Ma '+c.MA+'</span> ':'')+(c.MI?'<span class="pill p-MI">Mi '+c.MI+'</span>':''):'–')+'</td><td><button class="btn sm" data-open="'+a.id+'">เปิด</button></td></tr>'}).join('')+'</tbody></table></div>'
@@ -583,10 +583,14 @@ function renderHome(){
     Array.prototype.forEach.call(dc.querySelectorAll('input'),function(i){i.onchange=sync});
     var dv=(t.depts||[]).join(' / ');f('n-dept','dept',dv);f('n-date','date',firstDate(t.dates)||today);f('n-time','time',t.time||'');
     $('n-hint').textContent=t.dates?('กำหนดการตามแผน FM-MR-24: '+t.dates+' · '+(t.time||'')+' · หน่วยงาน: '+(t.depts||[]).join(' / ')):'';};
-  sel.onchange=function(){setScope();setSched()};setScope();setSched();
+  var pwBox=function(){var i=+sel.value;$('n-pwbox').innerHTML=canTeam(i)?'':'<label class="small">รหัสทีม '+(i+1)+' <input id="n-pw" type="password" placeholder="จากหัวหน้าทีม/QMR" style="width:150px;display:inline-block"></label>'};
+  sel.onchange=function(){setScope();setSched();pwBox()};setScope();setSched();pwBox();
   $('n-go').onclick=function(){
     var sys=Array.prototype.filter.call($('n-sys').querySelectorAll('input'),function(i){return i.checked}).map(function(i){return i.value});
-    if(!canTeam(+sel.value)){$('n-err').textContent='คุณไม่มีสิทธิ์เปิดการตรวจของทีมนี้';return}
+    if(!canTeam(+sel.value)){if(!($('n-pw')&&tryUnlock(+sel.value,$('n-pw').value))){$('n-err').textContent='ใส่รหัสทีมให้ถูกต้องก่อน — เฉพาะหัวหน้าทีมและลูกทีมที่ได้รับรหัสเท่านั้นที่เปิด/แก้ไขรายงานได้';return}}
+    var segs=function(d){return String(d||'').split(/\s+\/\s+/).map(function(x){return x.trim()}).filter(Boolean)};
+    var mine=segs($('n-dept').value),dup=Object.keys(S.audits).map(function(k){return S.audits[k]}).filter(function(x){return (x.team||0)===+sel.value&&segs(x.dept).some(function(d){return mine.indexOf(d)>=0})})[0];
+    if(dup){toast('ทีมนี้มีรายงานของหน่วยงานนี้อยู่แล้ว — เปิดฉบับเดิมให้ทำต่อ (1 ทีม/หน่วยงาน = 1 รายงาน)');S.cur=dup.id;S.filter='all';show('audit');return}
     if(!$('n-dept').value.trim()){$('n-err').textContent='กรอกหน่วยงานที่ถูกตรวจ';return}
     if(!sys.length){$('n-err').textContent='เลือกอย่างน้อยหนึ่งระบบ';return}
     var a={id:uid(),name:$('n-name').value.trim()||('IQA '+n+'/2569'),dept:$('n-dept').value.trim(),date:$('n-date').value,time:$('n-time').value.trim(),team:+sel.value,lead:(teams[+sel.value]||{}).lead||'',members:((teams[+sel.value]||{}).members||[]).slice(),observers:((teams[+sel.value]||{}).observers||[]).slice(),systems:sys,fmt:'sum2',results:{},created:Date.now()};
@@ -604,6 +608,35 @@ function renderHome(){
   Array.prototype.forEach.call($('v-home').querySelectorAll('[data-open]'),function(b){b.onclick=function(){S.cur=b.dataset.open;S.filter='all';show('audit')}});
 }
 
+
+/* ---------- รหัสผ่านสิทธิ์แก้ไข (หัวหน้าทีม / QMR) ---------- */
+function sha256(str){function r(n,x){return(x>>>n)|(x<<(32-n))}var K=[],H=[],P=[],i,j,n=2;
+  for(;P.length<64;n++){var ok=1;for(j=0;j<P.length;j++)if(n%P[j]===0){ok=0;break}if(ok)P.push(n)}
+  for(i=0;i<64;i++){if(i<8)H[i]=(Math.pow(P[i],1/2)*4294967296)|0;K[i]=(Math.pow(P[i],1/3)*4294967296)|0}
+  var b=unescape(encodeURIComponent(str)),w=[],l=b.length*8;for(i=0;i<b.length;i++)w[i>>2]|=b.charCodeAt(i)<<((3-i%4)*8);
+  w[l>>5]|=0x80<<(24-l%32);w[((l+64>>9)<<4)+15]=l;
+  for(j=0;j<w.length;j+=16){var a=H.slice(0),W=[];for(i=0;i<64;i++){
+    if(i<16)W[i]=w[i+j]|0;else{var x=W[i-15],y=W[i-2];W[i]=(W[i-16]+(r(7,x)^r(18,x)^(x>>>3))+W[i-7]+(r(17,y)^r(19,y)^(y>>>10)))|0}
+    var t1=(a[7]+(r(6,a[4])^r(11,a[4])^r(25,a[4]))+((a[4]&a[5])^(~a[4]&a[6]))+K[i]+W[i])|0,t2=((r(2,a[0])^r(13,a[0])^r(22,a[0]))+((a[0]&a[1])^(a[0]&a[2])^(a[1]&a[2])))|0;
+    a=[(t1+t2)|0].concat(a.slice(0,7));a[4]=(a[4]+t1)|0}
+    for(i=0;i<8;i++)H[i]=(H[i]+a[i])|0}
+  return H.map(function(v){return('00000000'+(v>>>0).toString(16)).slice(-8)}).join('')}
+var DEF_ADMIN='59daeba60f93678078b7feb330ab84f3e804061fb86894efbc607b923d20188e';
+var ACC=(function(){var d=lsGet('kst-hub-access');return d&&d.ver?d:{ver:1,admin:'',teams:{}}})();
+var UNL=(function(){try{return JSON.parse(sessionStorage.getItem('kst-unl')||'null')||{admin:0,teams:{}}}catch(e){return{admin:0,teams:{}}}})();
+function hpw(pw){return sha256('kst-audit|'+String(pw||'').trim())}
+function saveUnl(){try{sessionStorage.setItem('kst-unl',JSON.stringify(UNL))}catch(e){}}
+function saveAcc(){ACC.updated=Date.now();if(S.db)S.db.doc('config/access').set(ACC).catch(function(){toast('บันทึกรหัสผ่านไม่ได้ — ตรวจการเชื่อมต่อ')});lsSet('kst-hub-access',ACC)}
+/* role: 'admin' หรือเลขทีม (0-8) — คืน true ถ้ารหัสถูก */
+function tryUnlock(role,pw){
+  var h=hpw(pw),adm=(ACC.admin||DEF_ADMIN);
+  if(!String(pw||'').trim())return false;
+  if(role==='admin'){if(h!==adm)return false;UNL.admin=1}
+  else{var th=(ACC.teams||{})[role];if(h===adm){UNL.admin=1}else if(th&&h===th){UNL.teams[role]=1}else return false}
+  saveUnl();computeMe();whoRender();return true;
+}
+function lockAll(){UNL={admin:0,teams:{}};saveUnl();computeMe();whoRender();show(S.tab)}
+function genCode(){var c='ABCDEFGHJKMNPQRSTUVWXYZ23456789',o='';for(var i=0;i<6;i++)o+=c[Math.floor(Math.random()*c.length)];return o}
 /* ---------- สิทธิ์ ---------- */
 /* เปิดใช้งานทั่วไป: ทุกคนที่มีลิงก์เข้าใช้และแก้ไขได้ ไม่ต้องล็อกอิน (ตั้งเป็น false เพื่อกลับไปใช้ระบบล็อกอิน+สิทธิ์ตามทีม ซึ่งต้องใช้ schema.sql) */
 var OPEN=true;
@@ -611,20 +644,31 @@ var ADMIN_EMAIL='torsak.ar@kst-hatyai.com',ADMIN2='kitar.sa@ksthatyai365.onmicro
 function lc(s){return String(s||'').trim().toLowerCase()}
 function computeMe(){
   var em=lc(S.email),row=(S.members||[]).filter(function(m){return lc(m.email)===em})[0];
-  S.me={email:S.email||'',admin:OPEN||!S.db||em===ADMIN_EMAIL||em===ADMIN2||!!(row&&row.is_admin),team:row&&row.team!=null?+row.team:null,teams:row?((row.teams&&row.teams.length)?row.teams.map(Number):(row.team!=null?[+row.team]:[])):[],name:row?row.name:'',role:row?row.role:''};
+  if(OPEN){S.me={email:'',admin:!!UNL.admin,teams:Object.keys(UNL.teams||{}).map(Number),team:null,name:'',role:''};return}
+  S.me={email:S.email||'',admin:!S.db||em===ADMIN_EMAIL||em===ADMIN2||!!(row&&row.is_admin),team:row&&row.team!=null?+row.team:null,teams:row?((row.teams&&row.teams.length)?row.teams.map(Number):(row.team!=null?[+row.team]:[])):[],name:row?row.name:'',role:row?row.role:''};
 }
 function inTeam(i){return (S.me.teams||[]).indexOf(+i)>=0}
-function canTeam(i){return !S.db||S.me.admin||inTeam(i)}
-function canEdit(x){return !S.db||S.me.admin||(x&&x.team!=null&&inTeam(x.team))}
+function canTeam(i){return (!OPEN&&!S.db)||S.me.admin||inTeam(i)}
+function canEdit(x){return (!OPEN&&!S.db)||S.me.admin||(x&&x.team!=null&&inTeam(x.team))}
 function toast(m){var d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove()},4200)}
 function whoRender(){
   var w=$('who');if(!w)return;
-  if(!S.db||OPEN){w.textContent='';return}
+  if(OPEN){
+    var on=S.me.admin?'QMR (ผู้ดูแล)':(S.me.teams.length?'ทีม '+S.me.teams.map(function(x){return x+1}).join(', '):'');
+    w.innerHTML=on?'<span class="small">แก้ไขได้: <b>'+esc(on)+'</b></span> <button class="btn sm" id="w-lock">ล็อก</button>'
+      :'<span class="small muted">ดูอย่างเดียว</span> <button class="btn sm" id="w-un">ใส่รหัสเพื่อแก้ไข</button>';
+    if($('w-lock'))$('w-lock').onclick=lockAll;
+    if($('w-un'))$('w-un').onclick=function(){
+      w.innerHTML='<select id="w-role" class="sm" style="width:auto"><option value="admin">QMR (ผู้ดูแล)</option>'+getTeams().map(function(t,i){return '<option value="'+i+'">ทีม '+(i+1)+' · '+esc(t.lead)+'</option>'}).join('')+'</select> <input id="w-pw" type="password" placeholder="รหัสผ่าน" style="width:120px"> <button class="btn sm pri" id="w-ok">ยืนยัน</button> <button class="btn sm" id="w-x">ยกเลิก</button>';
+      var go=function(){var r=$('w-role').value;if(tryUnlock(r==='admin'?'admin':+r,$('w-pw').value)){toast('ปลดล็อกแล้ว');show(S.tab)}else{toast('รหัสผ่านไม่ถูกต้อง');$('w-pw').select()}};
+      $('w-ok').onclick=go;$('w-pw').onkeydown=function(e){if(e.key==='Enter')go()};$('w-x').onclick=whoRender;$('w-pw').focus()};
+    return}
   var t=S.me.admin?'ผู้ดูแล (QMR)':(S.me.teams&&S.me.teams.length)?('ทีม '+S.me.teams.map(function(x){return x+1}).join(', ')+(S.me.role==='lead'?' · หัวหน้าทีม':' · ผู้ตรวจ')):(S.me.role==='observer'?'ผู้สังเกตการณ์ (ดูอย่างเดียว)':'ดูอย่างเดียว');
   w.innerHTML='<span>'+esc(S.email)+' · <b>'+esc(t)+'</b></span><button class="btn sm" id="w-out">ออก</button>';
   $('w-out').onclick=function(){S.sb.auth.signOut().then(function(){location.reload()})};
 }
-function roBanner(a){return canEdit(a)?'':'<div class="ro">อ่านอย่างเดียว — การตรวจนี้เป็นของทีม '+((a.team||0)+1)+' · '+esc((getTeams()[a.team||0]||{}).lead||'')+' เฉพาะทีมนี้และผู้ดูแล (QMR) เท่านั้นที่แก้ไขได้</div>'}
+function roBanner(a){if(canEdit(a))return '';var t=teamOf(a);return '<div class="ro" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">อ่านอย่างเดียว — การตรวจนี้เป็นของทีม '+((a.team||0)+1)+' · '+esc(t.lead||'')+' แก้ไขได้เฉพาะผู้ที่มีรหัสทีม (หัวหน้าทีมแจกให้ลูกทีมที่ช่วยตรวจ) หรือ QMR <input type="password" class="ro-pw" data-team="'+(a.team||0)+'" placeholder="รหัสทีม" style="width:130px"> <button class="btn sm pri ro-go">ปลดล็อก</button></div>'}
+function bindRo(el){Array.prototype.forEach.call(el.querySelectorAll('.ro-go'),function(b){var inp=b.previousElementSibling;var go=function(){if(tryUnlock(+inp.dataset.team,inp.value)){toast('ปลดล็อกทีม '+(+inp.dataset.team+1)+' แล้ว');show(S.tab)}else{toast('รหัสผ่านไม่ถูกต้อง');inp.select()}};b.onclick=go;inp.onkeydown=function(e){if(e.key==='Enter')go()}})}
 
 /* ---------- ทีม + อีเมลผู้ตรวจ ---------- */
 function emailOf(name){var m=(S.members||[]).filter(function(x){return x.name===name})[0];return(S.draft&&S.draft[name]!=null)?S.draft[name]:(m?m.email:'')}
@@ -632,10 +676,16 @@ function renderTeams(){
   var teams=getTeams(),saved=!!S.teams,adm=S.me.admin,ed=adm;
   S.draft=S.draft||{};
   var html='<div style="display:flex;flex-direction:column;gap:16px"><div><h1 style="font-size:22px">ทีมตรวจติดตามภายใน</h1>'+
-   '<p class="muted" style="margin:6px 0 0;max-width:72ch">'+teams.length+' ทีม ตามกำหนดการ FM-MR-24 ('+FM24.round+') · ผู้สังเกตการณ์ไม่มีสิทธิ์แก้ผลตรวจ · คนที่อยู่หลายทีมใช้อีเมลเดียวและแก้ไขได้ทุกทีมที่สังกัด '+(OPEN?'ทุกคนที่มีลิงก์แก้ไขได้':S.db?(adm?'ผู้ดูแล (QMR) กรอกอีเมลของแต่ละคนเพื่อกำหนดสิทธิ์: แต่ละคนแก้ไขได้เฉพาะผลตรวจและ CAR ของทีมตัวเอง':'เฉพาะผู้ดูแล (QMR) แก้ไขทีมและอีเมลได้'):'')+(saved?'':' · ตอนนี้เป็นข้อเสนอเริ่มต้น')+'</p></div>';
+   '<p class="muted" style="margin:6px 0 0;max-width:72ch">'+teams.length+' ทีม ตามกำหนดการ FM-MR-24 ('+FM24.round+') · ผู้สังเกตการณ์ไม่มีสิทธิ์แก้ผลตรวจ · คนที่อยู่หลายทีมใช้อีเมลเดียวและแก้ไขได้ทุกทีมที่สังกัด '+(OPEN?'ทุกคนเปิดดูได้ · แก้ไขได้เฉพาะผู้มีรหัสทีม/QMR':S.db?(adm?'ผู้ดูแล (QMR) กรอกอีเมลของแต่ละคนเพื่อกำหนดสิทธิ์: แต่ละคนแก้ไขได้เฉพาะผลตรวจและ CAR ของทีมตัวเอง':'เฉพาะผู้ดูแล (QMR) แก้ไขทีมและอีเมลได้'):'')+(saved?'':' · ตอนนี้เป็นข้อเสนอเริ่มต้น')+'</p></div>';
   if(adm&&S.db&&!OPEN){
     html+='<div class="card"><b>วางรายชื่อ + อีเมลทีละบรรทัด</b> <span class="hint">เช่น “ทรงสิทธิ์ somchai@kst-hatyai.com” ระบบจะจับคู่กับรายชื่อด้านล่าง</span>'+
      '<textarea id="t-bulk" style="min-height:90px;margin-top:6px" placeholder="ชื่อ อีเมล"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="t-match">จับคู่อีเมล</button><span class="small muted" id="t-bm"></span></div></div>';
+  }
+  if(OPEN&&adm){
+    html+='<div class="card"><h2 style="font-size:17px;margin-bottom:6px">รหัสผ่านสิทธิ์แก้ไข</h2><p class="small muted" style="margin:0 0 10px">ทุกคนเปิดดูได้ แต่การเปิดการตรวจ/บันทึกผล/แก้รายงานต้องใช้รหัสของทีมนั้น — สร้างรหัสแล้วแจ้งหัวหน้าทีม หัวหน้าทีมแจกให้ลูกทีมที่ช่วยตรวจ (รหัสแสดงครั้งเดียว ถ้าลืมให้สร้างใหม่)</p>'+
+     '<div class="scroll"><table><thead><tr><th>ทีม</th><th>หัวหน้าทีม</th><th>สถานะ</th><th></th><th>รหัสใหม่</th></tr></thead><tbody>'+
+     teams.map(function(t,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(t.lead)+'</td><td>'+((ACC.teams||{})[i]?'<span class="pill p-PASS">ตั้งแล้ว</span>':'<span class="pill p-MI">ยังไม่ตั้ง</span>')+'</td><td><button class="btn sm" data-gen="'+i+'">สร้างรหัสใหม่</button></td><td><code id="pw-out-'+i+'" style="font-size:15px"></code></td></tr>'}).join('')+
+     '</tbody></table></div><div class="row" style="margin-top:10px"><button class="btn" id="pw-all">สร้างรหัสทุกทีม</button><span class="small muted">·</span><label class="small">รหัส QMR ใหม่ <input id="pw-adm" type="password" style="width:150px;display:inline-block"></label><button class="btn sm" id="pw-adm-go">เปลี่ยนรหัส QMR</button></div></div>';
   }
   html+='<div class="teams">';
   teams.forEach(function(t,i){
@@ -657,6 +707,18 @@ function renderTeams(){
   }
   html+='</div>';
   $('v-teams').innerHTML=html;
+  if(OPEN&&adm){
+    var gen=function(i){var c=genCode();ACC.teams=ACC.teams||{};ACC.teams[i]=hpw(c);return c};
+    Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(b){b.onclick=function(){var i=+b.dataset.gen,c=gen(i);saveAcc();
+      Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(x){});var o=$('pw-out-'+i);o.textContent=c;
+      var st=b.parentNode.previousElementSibling;st.innerHTML='<span class="pill p-PASS">ตั้งแล้ว</span>';toast('รหัสทีม '+(i+1)+': '+c+' — จดไว้แจ้งหัวหน้าทีม')}});
+    $('pw-all').onclick=function(){if(this.dataset.arm!=='1'){this.dataset.arm='1';this.textContent='กดอีกครั้ง — รหัสเดิมทุกทีมจะใช้ไม่ได้';return}
+      var out=teams.map(function(t,i){var c=gen(i);$('pw-out-'+i).textContent=c;return 'ทีม '+(i+1)+' '+t.lead+': '+c});saveAcc();
+      Array.prototype.forEach.call(document.querySelectorAll('[data-gen]'),function(b){b.parentNode.previousElementSibling.innerHTML='<span class="pill p-PASS">ตั้งแล้ว</span>'});
+      this.dataset.arm='';this.textContent='สร้างรหัสทุกทีม';
+      try{navigator.clipboard.writeText(out.join('\n'));toast('สร้างแล้ว และคัดลอกรายการรหัสทุกทีมไว้ในคลิปบอร์ด')}catch(e){toast('สร้างรหัสทุกทีมแล้ว')}};
+    $('pw-adm-go').onclick=function(){var v=$('pw-adm').value.trim();if(v.length<6){toast('รหัส QMR ต้องยาวอย่างน้อย 6 ตัวอักษร');return}ACC.admin=hpw(v);saveAcc();$('pw-adm').value='';toast('เปลี่ยนรหัส QMR แล้ว')};
+  }
   if(!adm)return;
   Array.prototype.forEach.call($('v-teams').querySelectorAll('[data-em]'),function(i){i.oninput=function(){S.draft[i.dataset.em]=i.value}});
   if($('t-adm'))$('t-adm').oninput=function(){S.draftAdm=this.value};
@@ -1098,7 +1160,7 @@ Array.prototype.forEach.call($('nav').children,function(b){b.onclick=function(){
 var loc=lsGet('kst-hub-audits');if(loc){Object.keys(loc).forEach(function(k){normA(loc[k])});S.audits=loc}
 var lcars=lsGet('kst-hub-cars');if(lcars)S.cars=lcars;
 var lt=lsGet('kst-hub-teams');if(lt&&lt.ver>=4&&lt.teams)S.teams=normTeams(lt.teams);
-computeMe();
+computeMe();whoRender();
 show('home');
 /* ---------- Supabase backend ---------- */
 var CFG=window.KST_CONFIG||{};
@@ -1140,6 +1202,7 @@ function attach(sb,db){
     if(S.tab==='sum')renderSum();else if(S.tab==='rep'&&!typing())renderRep();
     else if(S.tab==='cars'&&!typing()&&!Object.keys(timers).length)renderCars();
   });
+  db.doc('config/access').onSnapshot(function(s){if(s.exists&&s.data()&&s.data().ver){ACC=s.data();lsSet('kst-hub-access',ACC);if(S.tab==='teams'&&!typing())renderTeams()}});
   db.doc('config/teams').onSnapshot(function(s){
     if(s.exists&&s.data()&&s.data().teams&&s.data().ver>=4){S.teams=normTeams(s.data().teams);if(S.tab==='teams'&&!typing())renderTeams()}
   });
